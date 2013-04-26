@@ -9,22 +9,21 @@ import Foreign.Storable
 import Foreign.C
 
 type ErrCode   = CInt
-type ARHandler      = Ptr ARHandlerStruct
-type GRHandler      = Ptr GRHandlerStruct
-type VGSystem       = Ptr VGSystemStruct
-type VGDevice       = Ptr VGDeviceStruct
-type InitDesc       = Ptr InitDescStruct
-type OnDrawDesc     = Ptr OnDrawDescStruct
+type ARHandler      = Ptr ARHandler_
+type GRHandler      = Ptr GRHandler_
+type VGSystem       = Ptr VGSystem_
+type VGDevice       = Ptr VGDevice_
 
-data ARHandlerStruct
-data GRHandlerStruct                                             
-data VGSystemStruct
-data VGDeviceStruct
-data InitDescStruct
-data OnDrawDescStruct
-data LayoutSettingsStruct
+data ARHandler_
+data GRHandler_                                             
+data VGSystem_
+data VGDevice_
 
-foreign import ccall "GuidoInit"           cInit           :: InitDesc -> IO ErrCode;
+data InitDesc
+data OnDrawDesc
+data LayoutSettings
+
+foreign import ccall "GuidoInit"           cInit           :: Ptr InitDesc -> IO ErrCode;
 foreign import ccall "GuidoShutdown"       cShutdown       :: IO ()
 foreign import ccall "GuidoGetVersionStr"  cGetVersionStr  :: IO CString
 foreign import ccall "GuidoGetErrorString" cGetErrorString :: ErrCode -> CString
@@ -41,7 +40,7 @@ foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO Int
 --    const char*  textFont;
 -- };
 
-defInitDesc :: IO InitDesc
+defInitDesc :: IO (Ptr InitDesc)
 defInitDesc = do
     desc <- mallocBytes $ 4 * ptrSize
     pokeElemOff desc 0 $ nullPtr
@@ -49,7 +48,7 @@ defInitDesc = do
     pokeElemOff desc 3 $ nullPtr
     return $ castPtr desc
 
-newInitDesc :: VGDevice -> String -> String -> IO InitDesc
+newInitDesc :: VGDevice -> String -> String -> IO (Ptr InitDesc)
 newInitDesc device musicFont textFont = do
     desc   <- mallocBytes $ 4 * ptrSize
     cMusicFont <- newCString musicFont
@@ -78,7 +77,7 @@ newInitDesc device musicFont textFont = do
 
 newOnDrawDesc :: 
     GRHandler -> VGDevice -> Int -> Maybe (Int,Int,Int,Int) -> (Int,Int) -> Float -> (Int,Int) -> Bool
-    -> IO OnDrawDesc
+    -> IO (Ptr OnDrawDesc)
 newOnDrawDesc 
     handle device page updateRegion scroll reserved size isPrint
     = do
@@ -137,7 +136,7 @@ checkErr a e = case e of
     0 -> return a
     _ -> getErrorString e >>= \e -> error (": " ++ e)
 
-initialize :: InitDesc -> IO ()
+initialize :: (Ptr InitDesc) -> IO ()
 initialize d = cInit d >>= checkErr ()
 
 shutdown :: IO ()
