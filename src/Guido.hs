@@ -8,9 +8,15 @@ import Foreign.Marshal
 import Foreign.Storable
 import Foreign.C
 
-type GuidoErrCode  = CInt                                             
+type GuidoErrCode   = CInt
+type ARHandler      = Ptr ARHandlerStruct
+type GRHandler      = Ptr GRHandlerStruct
+
+data ARHandlerStruct
+data GRHandlerStruct                                             
 data GuidoInitDesc
-type ARHandler = Ptr ()
+data GuidoOnDrawDesc
+data GuidoLayoutSettings
 
 foreign import ccall "GuidoInit"           cGuidoInit           :: Ptr GuidoInitDesc -> IO GuidoErrCode;
 foreign import ccall "GuidoShutdown"       cGuidoShutdown       :: IO ()
@@ -22,26 +28,50 @@ foreign import ccall "GuidoParseString"    cGuidoParseString    :: CString -> Pt
 
 foreign import ccall "GuidoCGetVersion" cGuidoCGetVersion :: IO Int
 
+-- struct GuidoInitDesc { 
+--    VGDevice* graphicDevice;
+--    void* reserved;
+--    const char* musicFont;
+--    const char*  textFont;
+-- };
 
-
-
-
-
-
-
-
-
-
-
-
-
-defaultInitDesc :: IO (Ptr GuidoInitDesc)
-defaultInitDesc = do
+defInitDesc :: IO (Ptr GuidoInitDesc)
+defInitDesc = do
     ptr <- mallocBytes $ 4 * ptrSize :: IO (Ptr (Ptr a))
-    pokeElemOff ptr 0 nullPtr   -- graphicDevice
-    pokeElemOff ptr 2 nullPtr   -- musicFont
-    pokeElemOff ptr 3 nullPtr   -- textFont
+    pokeElemOff ptr 0 nullPtr
+    pokeElemOff ptr 2 nullPtr
+    pokeElemOff ptr 3 nullPtr
     return $ castPtr ptr
+
+-- struct GuidoOnDrawDesc {
+--     GRHandler handle;
+--     VGDevice * hdc;
+--     int page;
+--     GPaintStruct updateRegion;
+--     int scrollx, scrolly;
+--     float reserved;
+--     int sizex, sizey;
+--     int isprint;
+-- };
+
+-- struct GuidoLayoutSettings {
+--  float systemsDistance;
+--  int systemsDistribution;
+--  float systemsDistribLimit;
+--  float   force;
+--  float   spring;
+--  int neighborhoodSpacing;
+--  int optimalPageFill;
+-- };
+ 
+
+
+
+
+
+
+
+
 
 
 getErrorString :: GuidoErrCode -> IO String
@@ -53,7 +83,7 @@ checkErr a e = case e of
     _ -> getErrorString e >>= \e -> error ("Guido: " ++ e)
 
 initialize :: IO ()
-initialize = defaultInitDesc >>= cGuidoInit >>= checkErr ()
+initialize = defInitDesc >>= cGuidoInit >>= checkErr ()
 
 shutdown :: IO ()
 shutdown = cGuidoShutdown
