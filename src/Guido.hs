@@ -8,12 +8,19 @@ import Foreign.Marshal
 import Foreign.Storable
 import Foreign.C
 
-data GuidoInitDesc
 type GuidoErrCode  = CInt                                             
+data GuidoInitDesc
+type ARHandler = Ptr ()
 
-foreign import ccall "GuidoInit"           cGuidoInit     :: Ptr GuidoInitDesc -> IO GuidoErrCode;
-foreign import ccall "GuidoShutdown"       cGuidoShutdown :: IO ()
+foreign import ccall "GuidoInit"           cGuidoInit           :: Ptr GuidoInitDesc -> IO GuidoErrCode;
+foreign import ccall "GuidoShutdown"       cGuidoShutdown       :: IO ()
+foreign import ccall "GuidoGetVersionStr"  cGuidoGetVersionStr  :: IO CString
 foreign import ccall "GuidoGetErrorString" cGuidoGetErrorString :: GuidoErrCode -> CString
+
+foreign import ccall "GuidoParseFile"      cGuidoParseFile      :: CString -> Ptr ARHandler -> IO GuidoErrCode
+foreign import ccall "GuidoParseString"    cGuidoParseString    :: CString -> Ptr ARHandler -> IO GuidoErrCode
+
+
 
 defaultInitDesc :: IO (Ptr GuidoInitDesc)
 defaultInitDesc = do
@@ -22,17 +29,35 @@ defaultInitDesc = do
     pokeElemOff ptr 2 nullPtr   -- musicFont
     pokeElemOff ptr 3 nullPtr   -- textFont
     return $ castPtr ptr
-    where
-        ptrSize = sizeOf nullPtr
+
 
 getErrorString :: GuidoErrCode -> IO String
 getErrorString = peekCString . cGuidoGetErrorString
 
-initialize :: IO GuidoErrCode
-initialize = defaultInitDesc >>= cGuidoInit
+checkErr :: a -> GuidoErrCode -> IO a
+checkErr a e = case e of
+    0 -> return a
+    _ -> getErrorString e >>= \e -> error ("Guido: " ++ e)
+
+initialize :: IO ()
+initialize = defaultInitDesc >>= cGuidoInit >>= checkErr ()
 
 shutdown :: IO ()
 shutdown = cGuidoShutdown
+
+getVersionString :: IO String
+getVersionString = cGuidoGetVersionStr >>= peekCString
+
+parseFile :: FilePath -> IO ARHandler
+parseFile path = do
+    cPath     <- newCString path
+    handleRef <- mallocBytes ptrSize
+    err       <- cGuidoParseFile cPath handleRef
+    handle    <- deref handleRef
+    free cPath               
+    free handleRef
+    checkErr handle err
+
 
 -- GuidoErrCode GuidoParseFile(const char * filename, ARHandler* ar);
 -- GuidoErrCode GuidoParseString(const char * str, ARHandler* ar);
@@ -60,3 +85,12 @@ shutdown = cGuidoShutdown
 main = do
     putStrLn . show $ pi
     putStrLn . show $ sin pi
+
+
+
+
+
+
+ptrSize = sizeOf nullPtr
+deref :: Ptr (Ptr a) -> IO (Ptr a)
+deref = peek
