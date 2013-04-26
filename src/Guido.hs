@@ -19,8 +19,10 @@ data GRHandler_
 data VGSystem_
 data VGDevice_
 
-data InitDesc
-data OnDrawDesc
+data InitDesc       = InitDesc VGDevice String String
+    deriving (Eq, Ord, Show)
+data OnDrawDesc     = OnDrawDesc GRHandler VGDevice Int (Maybe (Int,Int,Int,Int)) (Int,Int) Float (Int,Int) Bool
+    deriving (Eq, Ord, Show)
 data LayoutSettings
 
 foreign import ccall "GuidoInit"           cInit           :: Ptr InitDesc -> IO ErrCode;
@@ -42,21 +44,22 @@ foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO Int
 
 defInitDesc :: IO (Ptr InitDesc)
 defInitDesc = do
-    desc <- mallocBytes $ 4 * ptrSize
-    pokeElemOff desc 0 $ nullPtr
-    pokeElemOff desc 2 $ nullPtr
-    pokeElemOff desc 3 $ nullPtr
-    return $ castPtr desc
+    ptr <- mallocBytes $ 4 * ptrSize
+    pokeElemOff ptr 0 $ nullPtr
+    pokeElemOff ptr 2 $ nullPtr
+    pokeElemOff ptr 3 $ nullPtr
+    return $ castPtr ptr
 
-newInitDesc :: VGDevice -> String -> String -> IO (Ptr InitDesc)
-newInitDesc device musicFont textFont = do
-    desc   <- mallocBytes $ 4 * ptrSize
-    cMusicFont <- newCString musicFont
-    cTextFont  <- newCString textFont
-    pokeElemOff desc 0 $ castPtr $ device
-    pokeElemOff desc 2 $ castPtr $ cMusicFont
-    pokeElemOff desc 3 $ castPtr $ cTextFont
-    return $ castPtr desc
+instance Storable InitDesc where
+    sizeOf _ = 4 * ptrSize    
+    alignment _ = ptrAlignment
+    peek = error "InitDesc: no peek"    
+    poke ptr (InitDesc device musicFont textFont) = do
+        cMusicFont <- newCString musicFont
+        cTextFont  <- newCString textFont
+        pokeByteOff ptr (ptrSize*0) $ castPtr $ device
+        pokeByteOff ptr (ptrSize*2) $ castPtr $ cMusicFont
+        pokeByteOff ptr (ptrSize*3) $ castPtr $ cTextFont
 
 -- struct GuidoOnDrawDesc {
 --     GRHandler handle;
@@ -75,27 +78,34 @@ newInitDesc device musicFont textFont = do
 --     int isprint;
 -- };
 
-newOnDrawDesc :: 
-    GRHandler -> VGDevice -> Int -> Maybe (Int,Int,Int,Int) -> (Int,Int) -> Float -> (Int,Int) -> Bool
-    -> IO (Ptr OnDrawDesc)
-newOnDrawDesc 
-    handle device page updateRegion scroll reserved size isPrint
-    = do
-    desc <- mallocBytes             $ sz
-   
-    pokeByteOff desc handle_        $ handle
-    pokeByteOff desc hdc_           $ device
-    pokeByteOff desc page_          $ page
-    pokeByteOff desc updateRegion_  $ (0::CInt) -- TODO use value
-    pokeByteOff desc scrollX_       $ fst scroll
-    pokeByteOff desc scrollY_       $ snd scroll
-    pokeByteOff desc reserved_      $ reserved
-    pokeByteOff desc sizeX_         $ fst size
-    pokeByteOff desc sizeY_         $ snd size
-    pokeByteOff desc isPrint_       $ if isPrint then (1::CInt) else 0
-        
-    return $ castPtr desc
-    where
+instance Storable OnDrawDesc where
+    sizeOf _ = sz
+      where
+        handle_         = 0
+        hdc_            = handle_       + ptrSize
+        page_           = hdc_          + ptrSize
+        updateRegion_   = page_         + intSize
+        scrollX_        = updateRegion_ + boolSize + 4 * intSize
+        scrollY_        = scrollX_      + intSize
+        reserved_       = scrollY_      + intSize
+        sizeX_          = reserved_     + floatSize
+        sizeY_          = sizeX_        + intSize
+        isPrint_        = sizeY_        + intSize
+        sz              = isPrint_      + intSize
+
+    alignment _ = ptrAlignment
+    poke ptr (OnDrawDesc handle device page updateRegion scroll reserved size isPrint) = do
+        pokeByteOff ptr handle_        $ handle
+        pokeByteOff ptr hdc_           $ device
+        pokeByteOff ptr page_          $ page
+        pokeByteOff ptr updateRegion_  $ (0::CInt) -- TODO use value
+        pokeByteOff ptr scrollX_       $ fst scroll
+        pokeByteOff ptr scrollY_       $ snd scroll
+        pokeByteOff ptr reserved_      $ reserved
+        pokeByteOff ptr sizeX_         $ fst size
+        pokeByteOff ptr sizeY_         $ snd size
+        pokeByteOff ptr isPrint_       $ if isPrint then (1::CInt) else 0
+      where
         handle_         = 0
         hdc_            = handle_       + ptrSize
         page_           = hdc_          + ptrSize
@@ -185,7 +195,7 @@ main = do
     return ()
 
 
-
+ptrAlignment = alignment nullPtr
 ptrSize = sizeOf nullPtr
 intSize = sizeOf (undefined::CInt)
 boolSize = sizeOf (undefined::CInt) -- TODO Hopefully correct
