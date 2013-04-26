@@ -8,25 +8,30 @@ import Foreign.Marshal
 import Foreign.Storable
 import Foreign.C
 
-type GuidoErrCode   = CInt
+type ErrCode   = CInt
 type ARHandler      = Ptr ARHandlerStruct
 type GRHandler      = Ptr GRHandlerStruct
+type VGSystem       = Ptr VGSystemStruct
+type VGDevice       = Ptr VGDeviceStruct
+type InitDesc  = Ptr InitDescStruct
 
 data ARHandlerStruct
 data GRHandlerStruct                                             
-data GuidoInitDesc
-data GuidoOnDrawDesc
-data GuidoLayoutSettings
+data VGSystemStruct
+data VGDeviceStruct
+data InitDescStruct
+data OnDrawDescStruct
+data LayoutSettingsStruct
 
-foreign import ccall "GuidoInit"           cGuidoInit           :: Ptr GuidoInitDesc -> IO GuidoErrCode;
-foreign import ccall "GuidoShutdown"       cGuidoShutdown       :: IO ()
-foreign import ccall "GuidoGetVersionStr"  cGuidoGetVersionStr  :: IO CString
-foreign import ccall "GuidoGetErrorString" cGuidoGetErrorString :: GuidoErrCode -> CString
+foreign import ccall "GuidoInit"           cInit           :: InitDesc -> IO ErrCode;
+foreign import ccall "GuidoShutdown"       cShutdown       :: IO ()
+foreign import ccall "GuidoGetVersionStr"  cGetVersionStr  :: IO CString
+foreign import ccall "GuidoGetErrorString" cGetErrorString :: ErrCode -> CString
 
-foreign import ccall "GuidoParseFile"      cGuidoParseFile      :: CString -> Ptr ARHandler -> IO GuidoErrCode
-foreign import ccall "GuidoParseString"    cGuidoParseString    :: CString -> Ptr ARHandler -> IO GuidoErrCode
+foreign import ccall "GuidoParseFile"      cParseFile      :: CString -> Ptr ARHandler -> IO ErrCode
+foreign import ccall "GuidoParseString"    cParseString    :: CString -> Ptr ARHandler -> IO ErrCode
 
-foreign import ccall "GuidoCGetVersion" cGuidoCGetVersion :: IO Int
+foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO Int
 
 -- struct GuidoInitDesc { 
 --    VGDevice* graphicDevice;
@@ -35,13 +40,23 @@ foreign import ccall "GuidoCGetVersion" cGuidoCGetVersion :: IO Int
 --    const char*  textFont;
 -- };
 
-defInitDesc :: IO (Ptr GuidoInitDesc)
+defInitDesc :: IO InitDesc
 defInitDesc = do
-    ptr <- mallocBytes $ 4 * ptrSize :: IO (Ptr (Ptr a))
-    pokeElemOff ptr 0 nullPtr
-    pokeElemOff ptr 2 nullPtr
-    pokeElemOff ptr 3 nullPtr
-    return $ castPtr ptr
+    desc <- mallocBytes $ 4 * ptrSize
+    pokeElemOff desc 0 $ nullPtr
+    pokeElemOff desc 2 $ nullPtr
+    pokeElemOff desc 3 $ nullPtr
+    return $ castPtr desc
+
+newInitDesc :: VGDevice -> String -> String -> IO InitDesc
+newInitDesc device musicFont textFont = do
+    desc   <- mallocBytes $ 4 * ptrSize
+    cMusicFont <- newCString musicFont
+    cTextFont  <- newCString textFont
+    pokeElemOff desc 0 $ castPtr $ device
+    pokeElemOff desc 2 $ castPtr $ cMusicFont
+    pokeElemOff desc 3 $ castPtr $ cTextFont
+    return $ castPtr desc
 
 -- struct GuidoOnDrawDesc {
 --     GRHandler handle;
@@ -74,28 +89,28 @@ defInitDesc = do
 
 
 
-getErrorString :: GuidoErrCode -> IO String
-getErrorString = peekCString . cGuidoGetErrorString
+getErrorString :: ErrCode -> IO String
+getErrorString = peekCString . cGetErrorString
 
-checkErr :: a -> GuidoErrCode -> IO a
+checkErr :: a -> ErrCode -> IO a
 checkErr a e = case e of
     0 -> return a
-    _ -> getErrorString e >>= \e -> error ("Guido: " ++ e)
+    _ -> getErrorString e >>= \e -> error (": " ++ e)
 
-initialize :: IO ()
-initialize = defInitDesc >>= cGuidoInit >>= checkErr ()
+initialize :: InitDesc -> IO ()
+initialize d = cInit d >>= checkErr ()
 
 shutdown :: IO ()
-shutdown = cGuidoShutdown
+shutdown = cShutdown
 
 getVersionString :: IO String
-getVersionString = cGuidoGetVersionStr >>= peekCString
+getVersionString = cGetVersionStr >>= peekCString
 
 parseFile :: FilePath -> IO ARHandler
 parseFile path = do
     cPath     <- newCString path
     handleRef <- mallocBytes ptrSize
-    err       <- cGuidoParseFile cPath handleRef
+    err       <- cParseFile cPath handleRef
     handle    <- deref handleRef
     free cPath               
     free handleRef
@@ -126,7 +141,7 @@ parseFile path = do
 
 
 main = do
-    initialize
+    defInitDesc >>= initialize
     ar <- parseFile "test.guido"
     return ()
 
