@@ -6,7 +6,7 @@ author:             Hans Hoglund
 maintainer:         Hans Hoglund
 license:            BSD3
 license-file:       COPYING
-synopsis:           Bindings to the GUIDO Music Notation library.
+synopsis:           Bindings to the GUIDO Music Notation engine.
 category:           Music
 tested-with:        GHC
 build-type:         Simple
