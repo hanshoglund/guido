@@ -13,7 +13,8 @@ type ARHandler      = Ptr ARHandlerStruct
 type GRHandler      = Ptr GRHandlerStruct
 type VGSystem       = Ptr VGSystemStruct
 type VGDevice       = Ptr VGDeviceStruct
-type InitDesc  = Ptr InitDescStruct
+type InitDesc       = Ptr InitDescStruct
+type OnDrawDesc     = Ptr OnDrawDescStruct
 
 data ARHandlerStruct
 data GRHandlerStruct                                             
@@ -62,12 +63,51 @@ newInitDesc device musicFont textFont = do
 --     GRHandler handle;
 --     VGDevice * hdc;
 --     int page;
---     GPaintStruct updateRegion;
+--     struct {
+--          bool	erase;
+--          int		left;
+--          int		top;
+--          int		right;
+--          int		bottom;
+--     } updateRegion;
 --     int scrollx, scrolly;
 --     float reserved;
 --     int sizex, sizey;
 --     int isprint;
 -- };
+
+newOnDrawDesc :: 
+    GRHandler -> VGDevice -> Int -> Maybe (Int,Int,Int,Int) -> (Int,Int) -> Float -> (Int,Int) -> Bool
+    -> IO OnDrawDesc
+newOnDrawDesc 
+    handle device page updateRegion scroll reserved size isPrint
+    = do
+    desc <- mallocBytes             $ sz
+   
+    pokeByteOff desc handle_        $ handle
+    pokeByteOff desc hdc_           $ device
+    pokeByteOff desc page_          $ page
+    pokeByteOff desc updateRegion_  $ (0::CInt) -- TODO use value
+    pokeByteOff desc scrollX_       $ fst scroll
+    pokeByteOff desc scrollY_       $ snd scroll
+    pokeByteOff desc reserved_      $ reserved
+    pokeByteOff desc sizeX_         $ fst size
+    pokeByteOff desc sizeY_         $ snd size
+    pokeByteOff desc isPrint_       $ if isPrint then (1::CInt) else 0
+        
+    return $ castPtr desc
+    where
+        handle_         = 0
+        hdc_            = handle_       + ptrSize
+        page_           = hdc_          + ptrSize
+        updateRegion_   = page_         + intSize
+        scrollX_        = updateRegion_ + boolSize + 4 * intSize
+        scrollY_        = scrollX_      + intSize
+        reserved_       = scrollY_      + intSize
+        sizeX_          = reserved_     + floatSize
+        sizeY_          = sizeX_        + intSize
+        isPrint_        = sizeY_        + intSize
+        sz              = isPrint_      + intSize
 
 -- struct GuidoLayoutSettings {
 --  float systemsDistance;
@@ -148,5 +188,10 @@ main = do
 
 
 ptrSize = sizeOf nullPtr
+intSize = sizeOf (undefined::CInt)
+boolSize = sizeOf (undefined::CInt) -- TODO Hopefully correct
+floatSize = sizeOf (undefined::CFloat)
+doubleSize = sizeOf (undefined::CDouble)
+
 deref :: Ptr (Ptr a) -> IO (Ptr a)
 deref = peek
