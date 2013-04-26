@@ -20,8 +20,19 @@ foreign import ccall "GuidoGetErrorString" cGuidoGetErrorString :: GuidoErrCode 
 foreign import ccall "GuidoParseFile"      cGuidoParseFile      :: CString -> Ptr ARHandler -> IO GuidoErrCode
 foreign import ccall "GuidoParseString"    cGuidoParseString    :: CString -> Ptr ARHandler -> IO GuidoErrCode
 
-
 foreign import ccall "GuidoCGetVersion" cGuidoCGetVersion :: IO Int
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 defaultInitDesc :: IO (Ptr GuidoInitDesc)
@@ -85,9 +96,9 @@ parseFile path = do
 
 
 main = do
-    putStrLn . show $ pi
-    putStrLn . show $ sin pi
-
+    initialize
+    ar <- parseFile "test.guido"
+    return ()
 
 
 
