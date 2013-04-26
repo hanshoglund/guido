@@ -6,8 +6,9 @@
     Copyright (c) Hans Höglund 2013. BSD-like license.
  */
 
-extern "C" {
+extern "C" 
+{
     
-    int ThisIsAFunction();
+    int GuidoCGetVersion();
 
 } 

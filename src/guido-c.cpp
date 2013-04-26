@@ -8,9 +8,8 @@
 
 #include <guido-c.h>
 
-// #define EXPORT __attribute__((visibility("default")))
+// #define kVersion 1;
 
-int ThisIsAFunction() {
-    GuidoInit(0);
-    return 42;
+int GuidoCGetVersion() {
+    return 2;
 }
