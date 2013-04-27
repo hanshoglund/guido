@@ -1,5 +1,5 @@
 
-{-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls #-}
+{-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls, BangPatterns #-}
 
 module Guido where
 
@@ -47,8 +47,9 @@ foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
 foreign import ccall "GuidoCCreateSystem" cGuidoCCreateSystem :: IO VGSystem
 foreign import ccall "GuidoCCreateSVGSystem" cGuidoCCreateSVGSystem :: IO VGSystem
 foreign import ccall "GuidoCCreateDisplayDevice" cGuidoCCreateDisplayDevice :: VGSystem -> IO VGDevice
+foreign import ccall "GuidoCCreateMemoryDevice" cGuidoCCreateMemoryDevice :: VGSystem -> Int -> Int -> IO VGDevice
 
-
+-- foreign import ccall "GuidoCPaint" cGuidoCPaint :: Ptr a -> FunPtr (Ptr b -> IO ()) -> Ptr b -> IO ()
 
 -- struct GuidoInitDesc { 
 --    VGDevice* graphicDevice;
@@ -223,10 +224,10 @@ draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
 
 setupTest = do              
     sys <- cGuidoCCreateSystem
-    dev <- cGuidoCCreateDisplayDevice sys
+    dev <- cGuidoCCreateMemoryDevice sys 400 400
     let id = InitDesc dev "Guido2" "Arial"
     initialize id
-    ar <- parseFile "test.guido"    
+    ar <- parseFile "test.guido" -- parse requires initialize (don't ask!)    
     gr <- ar2gr Nothing ar
     putStrLn $ show ar
     putStrLn $ show gr
@@ -234,16 +235,15 @@ setupTest = do
 
 drawTest dev gr = do
     let od = OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,800) False
-    draw od
+    -- draw od
     return ()
     
 
 gui = do
     frame <- frame [text := "Guido Test"]
-    -- set frame [on paint := \_ _ -> test]
 
-    (dev,gr) <- setupTest
-    drawTest dev gr
+    (!dev,!gr) <- setupTest
+    set frame [on paint := \_ _ -> drawTest dev gr]
     return ()
 
 main = start gui

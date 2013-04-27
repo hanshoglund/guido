@@ -38,6 +38,9 @@ CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * a);
 void GuidoCBeginContext();
 void GuidoCEndContext();
 
+typedef void* Unary(void*);                                    
+// Given a wxWindow, create a DC and invoke the callback
+void GuidoCPaint(void * window, Unary * callback, void * data);
 
 
 #ifdef __cplusplus

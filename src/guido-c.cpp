@@ -7,6 +7,8 @@
 #include <GUIDOEngine/GSystemOSX.h>
 #include <GUIDOEngine/SVGSystem.h>
 
+#include <wx/dcclient.h>
+
 #include <guido-c.h>
 
 int GuidoCGetVersion() {
@@ -24,6 +26,11 @@ CVGSystem * GuidoCCreateSystem() {
      */
 	CVGSystem * system = (CVGSystem*) new GSystemOSX(0,0);
     return system;
+}
+
+void GuidoCPaint(void * window, Unary * callback, void * data) {
+    wxPaintDC MyDC((wxWindow*)0);
+    callback(data);
 }
 
 CVGSystem * GuidoCCreateSVGSystem() {
