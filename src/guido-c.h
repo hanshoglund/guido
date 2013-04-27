@@ -35,12 +35,9 @@ CVGDevice * GuidoCCreateMemoryDevice(CVGSystem * a, int width, int height);
 CVGDevice * GuidoCCreateMemoryDevicePath(CVGSystem * a, const char* path);
 CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * a);
 
-void GuidoCBeginContext();
-void GuidoCEndContext();
 
-typedef void* Unary(void*);                                    
-// Given a wxWindow, create a DC and invoke the callback
-void GuidoCPaint(void * window, Unary * callback, void * data);
+void GuidoCNativePaint(void * window, void * device);
+
 
 
 #ifdef __cplusplus

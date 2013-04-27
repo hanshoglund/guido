@@ -18,6 +18,8 @@ int GuidoCGetVersion() {
 // System
 
 CVGSystem * GuidoCCreateSystem() {
+    fprintf(stderr, "Creating system!\n");
+
     // FIXME need to pass CGContextRef as first param here
     /*
        In a WX paint handler:
@@ -28,9 +30,13 @@ CVGSystem * GuidoCCreateSystem() {
     return system;
 }
 
-void GuidoCPaint(void * window, Unary * callback, void * data) {
-    wxPaintDC MyDC((wxWindow*)0);
-    callback(data);
+void GuidoCNativePaint(void * window, void * device) {
+    fprintf(stderr, "Repainting!\n");
+
+    // wxPaintDC MyDC((wxWindow*)0);
+    CGContextRef context = CGContextRef(((VGDevice*) device)->GetNativeContext());
+    unsigned char*  data = (unsigned char *)::CGBitmapContextGetData(context); 
+    fprintf(stderr, "This is the data: %p\n", data);
 }
 
 CVGSystem * GuidoCCreateSVGSystem() {

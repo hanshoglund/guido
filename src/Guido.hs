@@ -9,6 +9,7 @@ import Foreign.Storable
 import Foreign.C
 
 import Graphics.UI.WX hiding (alignment)
+import Graphics.UI.WXCore.WxcObject
 
 
 type ErrCode   = CInt
@@ -49,7 +50,14 @@ foreign import ccall "GuidoCCreateSVGSystem" cGuidoCCreateSVGSystem :: IO VGSyst
 foreign import ccall "GuidoCCreateDisplayDevice" cGuidoCCreateDisplayDevice :: VGSystem -> IO VGDevice
 foreign import ccall "GuidoCCreateMemoryDevice" cGuidoCCreateMemoryDevice :: VGSystem -> Int -> Int -> IO VGDevice
 
--- foreign import ccall "GuidoCPaint" cGuidoCPaint :: Ptr a -> FunPtr (Ptr b -> IO ()) -> Ptr b -> IO ()
+-- window -> device -> IO ()
+foreign import ccall "GuidoCNativePaint" cGuidoCNativePaint :: Ptr a -> VGDevice -> IO ()
+
+nativePaint :: Window a -> VGDevice -> IO ()
+nativePaint win dev = do
+    withObjectPtr win $ \p -> cGuidoCNativePaint p dev
+
+
 
 -- struct GuidoInitDesc { 
 --    VGDevice* graphicDevice;
@@ -221,21 +229,25 @@ draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
 -- GuidoErrCode     GuidoFactorySetDuration( ARFactoryHandler inFactory, int numerator, int denominator );
 
  
-
+setupTest :: IO (VGDevice, GRHandler)
 setupTest = do              
     sys <- cGuidoCCreateSystem
+    -- dev <- cGuidoCCreateDisplayDevice sys
     dev <- cGuidoCCreateMemoryDevice sys 400 400
-    let id = InitDesc dev "Guido2" "Arial"
-    initialize id
+
+    initialize $ InitDesc dev "Guido2" "Arial"
+
     ar <- parseFile "test.guido" -- parse requires initialize (don't ask!)    
     gr <- ar2gr Nothing ar
+
     putStrLn $ show ar
     putStrLn $ show gr
     return (dev, gr)
 
-drawTest dev gr = do
-    let od = OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,800) False
-    -- draw od
+drawTest :: Window a -> VGDevice -> GRHandler -> IO ()
+drawTest win dev gr = do
+    draw $ OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,800) False
+    nativePaint win dev
     return ()
     
 
@@ -243,7 +255,7 @@ gui = do
     frame <- frame [text := "Guido Test"]
 
     (!dev,!gr) <- setupTest
-    set frame [on paint := \_ _ -> drawTest dev gr]
+    set frame [on paint := \_ _ -> drawTest frame dev gr]
     return ()
 
 main = start gui

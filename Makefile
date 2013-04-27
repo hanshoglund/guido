@@ -2,6 +2,7 @@
 test: lib
 	ghci -framework GUIDOEngine -lguidoc src/Guido.hs
 
+fresh : clean lib
 lib: libguidoc.dylib
 
 libguidoc.dylib:
