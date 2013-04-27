@@ -9,25 +9,13 @@
 
 #include <guido-c.h>
 
-// const char *byte_to_binary(int x);
-
 const char* GuidoCGetVersion() 
 {
         return "0.5.0";
 }
 
-// System
-
 GuidoCGraphicSystem * GuidoCCreateSystem() 
 {
-        fprintf(stderr, "Creating system!\n");
-
-        // FIXME need to pass CGContextRef as first param here
-        /*
-           In a WX paint handler:
-            wxPaintDC MyDC(this);
-            CGContextRef context = ((wxMacCGContext*)MyDC.GetGraphicContext())->GetNativeContext();
-         */
     	GuidoCGraphicSystem * system = (GuidoCGraphicSystem*) new GSystemOSX(0,0);
         return system;
 }
