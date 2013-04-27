@@ -238,7 +238,9 @@ test = do
 
 gui = do
     frame <- frame [text := "Guido Test"]
+    -- set frame [on paint := \_ _ -> test]
     test
+    return ()
 
 main = start gui
 

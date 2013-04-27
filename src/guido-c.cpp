@@ -16,6 +16,12 @@ int GuidoCGetVersion() {
 // System
 
 CSystem * GuidoCCreateSystem() {
+    // FIXME need to pass CGContextRef as first param here
+    /*
+       In a WX paint handler:
+        wxPaintDC MyDC(this);
+        CGContextRef context = ((wxMacCGContext*)MyDC.GetGraphicContext())->GetNativeContext();
+     */
 	CSystem * system = (CSystem*) new GSystemOSX(0,0);
     return system;
 }

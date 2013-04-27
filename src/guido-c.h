@@ -6,11 +6,12 @@
     Copyright (c) Hans Höglund 2013. BSD-like license.
  */
 
-typedef struct CSystem;
-typedef struct CDevice;
+typedef void CSystem;
+typedef void CDevice;
 
-extern "C" 
-{
+#ifdef __cplusplus
+extern "C" {
+#endif
     
     int GuidoCGetVersion();
 
@@ -26,4 +27,11 @@ extern "C"
     CDevice * GuidoCCreateMemoryDevice(CSystem * a, int width, int height);
     CDevice * GuidoCCreateMemoryDevicePath(CSystem * a, const char* path);
     CDevice * GuidoCCreatePrinterDevice(CSystem * a);
-} 
+    
+    
+    void GuidoCBeginContext();
+    void GuidoCEndContext();
+
+#ifdef __cplusplus
+}
+#endif
