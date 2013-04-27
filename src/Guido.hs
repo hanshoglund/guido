@@ -8,6 +8,9 @@ import Foreign.Marshal
 import Foreign.Storable
 import Foreign.C
 
+import Graphics.UI.WX hiding (alignment)
+
+
 type ErrCode   = CInt
 type ARHandler      = Ptr ARHandler_
 type GRHandler      = Ptr GRHandler_
@@ -218,8 +221,7 @@ draw d = with d $ \dp -> cGuidoOnDraw dp >>= checkErr ()
 
  
 
-
-main = do              
+test = do              
     sys <- cGuidoCCreateSystem
     dev <- cGuidoCCreateDisplayDevice sys
     let id = InitDesc dev "Guido2" "Arial"
@@ -233,6 +235,18 @@ main = do
     draw od
     
     return ()
+
+gui = do
+    frame <- frame [text := "Guido Test"]
+    test
+
+main = start gui
+
+
+
+
+
+
 
 
 ptrAlignment = alignment nullPtr
