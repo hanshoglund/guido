@@ -36,7 +36,7 @@ CVGDevice * GuidoCCreateMemoryDevicePath(CVGSystem * a, const char* path);
 CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * a);
 
 
-void GuidoCNativePaint(void * window, void * device);
+uint32_t* GuidoCNativePaint(void * device);
 
 
 

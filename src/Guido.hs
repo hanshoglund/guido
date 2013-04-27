@@ -6,11 +6,12 @@ module Guido where
 import Foreign.Ptr
 import Foreign.Marshal
 import Foreign.Storable
-import Foreign.C
+import Foreign.C 
+import Data.Word
 
 import Graphics.UI.WX hiding (alignment)
 import Graphics.UI.WXCore.WxcObject
-
+import Graphics.UI.WXCore.WxcClassTypes
 
 type ErrCode   = CInt
 type ARHandler      = Ptr ARHandler_
@@ -51,11 +52,10 @@ foreign import ccall "GuidoCCreateDisplayDevice" cGuidoCCreateDisplayDevice :: V
 foreign import ccall "GuidoCCreateMemoryDevice" cGuidoCCreateMemoryDevice :: VGSystem -> Int -> Int -> IO VGDevice
 
 -- window -> device -> IO ()
-foreign import ccall "GuidoCNativePaint" cGuidoCNativePaint :: Ptr a -> VGDevice -> IO ()
+foreign import ccall "GuidoCNativePaint" cGuidoCNativePaint :: VGDevice -> IO (Ptr Word32)
 
-nativePaint :: Window a -> VGDevice -> IO ()
-nativePaint win dev = do
-    withObjectPtr win $ \p -> cGuidoCNativePaint p dev
+nativePaint :: VGDevice -> IO (Ptr Word32)
+nativePaint = cGuidoCNativePaint
 
 
 
@@ -233,7 +233,7 @@ setupTest :: IO (VGDevice, GRHandler)
 setupTest = do              
     sys <- cGuidoCCreateSystem
     -- dev <- cGuidoCCreateDisplayDevice sys
-    dev <- cGuidoCCreateMemoryDevice sys 400 400
+    dev <- cGuidoCCreateMemoryDevice sys 800 400
 
     initialize $ InitDesc dev "Guido2" "Arial"
 
@@ -244,12 +244,13 @@ setupTest = do
     putStrLn $ show gr
     return (dev, gr)
 
-drawTest :: Window a -> VGDevice -> GRHandler -> IO ()
+drawTest :: Window a -> VGDevice -> GRHandler -> IO (Ptr Word32)
 drawTest win dev gr = do
-    draw $ OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,800) False
-    nativePaint win dev
-    return ()
-    
+    draw $ OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,400) False
+    nativePaint dev
+
+fromRaw :: Int -> Int -> Ptr Word32 -> IO (Image ())    
+fromRaw w h ptr = undefined
 
 gui = do
     frame <- frame [text := "Guido Test"]
@@ -257,11 +258,14 @@ gui = do
     (!dev,!gr) <- setupTest
     set frame [on paint := \dc rect -> do
         putStrLn $ show rect
+        
+        rawImg <- drawTest frame dev gr
+        -- img <- fromRaw 800 400 rawImg
         img <- imageCreateFromFile "/Users/hans/Desktop/grav.png"
+
         drawImage dc img (pt (rectWidth rect `div` 2) 0) []
-        
-        
-        -- drawTest frame dev gr
+
+        return ()
         ]
     return ()
 

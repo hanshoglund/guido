@@ -7,7 +7,7 @@
 #include <GUIDOEngine/GSystemOSX.h>
 #include <GUIDOEngine/SVGSystem.h>
 
-#include <wx/dcclient.h>
+// #include <wx/dcclient.h>
 
 #include <guido-c.h>
 
@@ -30,13 +30,19 @@ CVGSystem * GuidoCCreateSystem() {
     return system;
 }
 
-void GuidoCNativePaint(void * window, void * device) {
+uint32_t* GuidoCNativePaint(void * device) {
     fprintf(stderr, "Repainting!\n");
 
     // wxPaintDC MyDC((wxWindow*)0);
     CGContextRef context = CGContextRef(((VGDevice*) device)->GetNativeContext());
-    unsigned char*  data = (unsigned char *)::CGBitmapContextGetData(context); 
-    fprintf(stderr, "This is the data: %p\n", data);
+    uint32_t* data = (uint32_t*)::CGBitmapContextGetData(context); 
+
+    int n = CGBitmapContextGetBitsPerPixel(context);
+    int w = CGBitmapContextGetWidth(context);
+    int h = CGBitmapContextGetHeight(context);
+
+    fprintf(stderr, "Data format: n=%d w=%d h=%d\n", n, w, h);
+    return data;
 }
 
 CVGSystem * GuidoCCreateSVGSystem() {
