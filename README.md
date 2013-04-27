@@ -1,19 +1,21 @@
 
 # guido
 
-Haskell bindings to the GUIDO Engine.
+Haskell bindings to the [GUIDO Engine][guido-engine].
 
 ## Installation
 
 ### OS X
 
-* Download and install the GUIDO Engine as a framework in
-  `/Library/Frameworks/GUIDOEngine.framework`.
+* Download and install the GUIDO Engine as a framework in `/Library/Frameworks/GUIDOEngine.framework`.
+* Compile the `guido-c` library using the Makefile.
+* Add the following to your `.cabal` file:
 
-* Compile `libguidoc.dylib` using the Makefile.
-
-* **Note:** If you want to use GHCI, you must start it using `make test`, or pass
-  the framework and library manually.
+    frameworks:
+        GUIDOEngine
+    extra-libraries:
+        guidoc
+    
 
 ## Requirements
 
@@ -23,3 +25,5 @@ Haskell bindings to the GUIDO Engine.
 
     cabal configure
     cabal install
+
+[guido-engine]: http://guidolib.sourceforge.net/
