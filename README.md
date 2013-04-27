@@ -12,6 +12,7 @@ Haskell bindings to the [GUIDO Engine][guido-engine].
 * Add the following to your `.cabal` file:
 
 &nbsp;
+
     frameworks:
         GUIDOEngine
     extra-libraries:
