@@ -255,7 +255,14 @@ gui = do
     frame <- frame [text := "Guido Test"]
 
     (!dev,!gr) <- setupTest
-    set frame [on paint := \_ _ -> drawTest frame dev gr]
+    set frame [on paint := \dc rect -> do
+        putStrLn $ show rect
+        img <- imageCreateFromFile "/Users/hans/Desktop/grav.png"
+        drawImage dc img (pt (rectWidth rect `div` 2) 0) []
+        
+        
+        -- drawTest frame dev gr
+        ]
     return ()
 
 main = start gui
