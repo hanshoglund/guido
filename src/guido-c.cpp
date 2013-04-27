@@ -33,9 +33,13 @@ CVGSystem * GuidoCCreateSystem() {
     return system;
 }
 
-uint32_t* GuidoCNativePaint(void * device) {
-    fprintf(stderr, "Repainting!\n");
+uint32_t* GuidoCNativePaint(CVGDevice * device) {
+    CGContextRef context = CGContextRef(((VGDevice*) device)->GetNativeContext());
+    uint32_t* data = (uint32_t*)::CGBitmapContextGetData(context); 
+    return data;
+}
 
+void GuidoCPrintDeviceInfo(CVGDevice * device) {
     CGContextRef context = CGContextRef(((VGDevice*) device)->GetNativeContext());
     uint32_t* data = (uint32_t*)::CGBitmapContextGetData(context); 
 
@@ -65,10 +69,8 @@ uint32_t* GuidoCNativePaint(void * device) {
     if (a == kCGImageAlphaFirst)                 fprintf(stderr, "Alpha: kCGImageAlphaFirst\n");
     if (a == kCGImageAlphaNoneSkipLast)          fprintf(stderr, "Alpha: kCGImageAlphaNoneSkipLast\n");
     if (a == kCGImageAlphaNoneSkipFirst)         fprintf(stderr, "Alpha: kCGImageAlphaNoneSkipFirst\n");
-
-
-    return data;
 }
+
 
 CVGSystem * GuidoCCreateSVGSystem() {
     CVGSystem * system = (CVGSystem*) new SVGSystem();

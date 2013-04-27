@@ -240,7 +240,7 @@ setupTest = do
 
     initialize $ InitDesc dev "Guido2" "Arial"
 
-    ar <- parseFile "test.guido" -- parse requires initialize (don't ask!)    
+    ar <- parseFile "test.gmn" -- parse requires initialize (don't ask!)    
     gr <- ar2gr Nothing ar
 
     putStrLn $ show ar
@@ -287,7 +287,7 @@ fromRaw w h ptr = do
 
 
 gui = do
-    frame <- frame [text := "Guido Test"]
+    frame <- frame [text := "Guido Test", size := sz 800 800]
           
     (!dev,!gr) <- setupTest
 

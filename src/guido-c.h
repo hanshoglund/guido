@@ -27,17 +27,16 @@ int GuidoCGetVersion();
 CVGSystem * GuidoCCreateSystem();
 CVGSystem * GuidoCCreateSVGSystem();
 
-void GuidoCFreeSystem(CVGSystem * system);
-void GuidoCFreeSVGSystem(CVGSystem * system);
+void        GuidoCFreeSystem(CVGSystem * system);
+void        GuidoCFreeSVGSystem(CVGSystem * system);
 
 CVGDevice * GuidoCCreateDisplayDevice(CVGSystem * a);
 CVGDevice * GuidoCCreateMemoryDevice(CVGSystem * a, int width, int height);
 CVGDevice * GuidoCCreateMemoryDevicePath(CVGSystem * a, const char* path);
 CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * a);
 
-
-uint32_t* GuidoCNativePaint(void * device);
-
+uint32_t*   GuidoCNativePaint(CVGDevice * device);
+void        GuidoCPrintDeviceInfo(CVGDevice * device);
 
 
 #ifdef __cplusplus
