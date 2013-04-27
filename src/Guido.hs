@@ -254,14 +254,16 @@ fromRaw w h ptr = undefined
 
 gui = do
     frame <- frame [text := "Guido Test"]
-
+          
     (!dev,!gr) <- setupTest
+
     set frame [on paint := \dc rect -> do
         putStrLn $ show rect
         
         rawImg <- drawTest frame dev gr
         -- img <- fromRaw 800 400 rawImg
-        img <- imageCreateFromFile "/Users/hans/Desktop/grav.png"
+        -- img <- imageCreateFromFile "/Users/hans/Desktop/grav.png"
+        img <- imageCreateFromPixels (sz 16 16) $ replicate (16^2) black
 
         drawImage dc img (pt (rectWidth rect `div` 2) 0) []
 
