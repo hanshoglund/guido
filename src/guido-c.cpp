@@ -7,12 +7,9 @@
 #include <GUIDOEngine/GSystemOSX.h>
 #include <GUIDOEngine/SVGSystem.h>
 
-// #include <wx/dcclient.h>
-
 #include <guido-c.h>
 
-const char *byte_to_binary(int x);
-
+// const char *byte_to_binary(int x);
 
 int GuidoCGetVersion() {
     return 2;
@@ -52,8 +49,8 @@ void GuidoCPrintDeviceInfo(CVGDevice * device) {
     unsigned a = CGBitmapContextGetAlphaInfo(context);
 
     fprintf(stderr, "Data format: bitsPerComp=%d bitsPerPixel=%d width=%d height=%d\n", m, n, w, h);
-    fprintf(stderr, "Info: %s\n", byte_to_binary(i));
-    fprintf(stderr, "Alpha info: %s\n", byte_to_binary(a));
+    // fprintf(stderr, "Info: %s\n", byte_to_binary(i));
+    // fprintf(stderr, "Alpha info: %s\n", byte_to_binary(a));
 
     if (i & kCGBitmapFloatComponents)   fprintf(stderr, "The components are floats\n");
     if ((i & kCGBitmapByteOrderMask) == kCGBitmapByteOrderDefault) fprintf(stderr, "The byte order is the default\n");
@@ -105,12 +102,12 @@ CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * system) {
 
 
 
-const char *byte_to_binary(int x)
-{
-    static char b[9];
-    b[0] = '\0';
-    int z;
-    for (z = 128; z > 0; z >>= 1)
-        strcat(b, ((x & z) == z) ? "1" : "0");
-    return b;
-}
+// const char *byte_to_binary(int x)
+// {
+//     static char b[9];
+//     b[0] = '\0';
+//     int z;
+//     for (z = 128; z > 0; z >>= 1)
+//         strcat(b, ((x & z) == z) ? "1" : "0");
+//     return b;
+// }

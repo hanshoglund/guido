@@ -1,6 +1,6 @@
 
 /**
-    Wrapper for some C++-speficic parts of the GUIDO engine.
+    Pure C wrapper for thethe GUIDO engine.
     Created for the Haskell bindings by Hans Höglund.
 
     Copyright (c) Hans Höglund 2013. BSD-like license.
@@ -22,12 +22,18 @@ extern "C" {
 #endif
     
 
+/** Return the version of guido-c (not to be confused with the guido version).
+ */
 int GuidoCGetVersion();
 
+/** Create the default system.
+ */
 CVGSystem * GuidoCCreateSystem();
-CVGSystem * GuidoCCreateSVGSystem();
-
 void        GuidoCFreeSystem(CVGSystem * system);
+
+/** Create an SVG system.
+ */
+CVGSystem * GuidoCCreateSVGSystem();
 void        GuidoCFreeSVGSystem(CVGSystem * system);
 
 CVGDevice * GuidoCCreateDisplayDevice(CVGSystem * a);
@@ -37,6 +43,9 @@ CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * a);
 
 uint32_t*   GuidoCNativePaint(CVGDevice * device);
 void        GuidoCPrintDeviceInfo(CVGDevice * device);
+
+
+
 
 
 #ifdef __cplusplus
