@@ -35,6 +35,18 @@ foreign import ccall "GuidoParseString"    cParseString    :: CString -> Ptr ARH
 
 foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO Int
 
+foreign import ccall "GuidoAR2GR"       cAR2GR  :: 
+    ARHandler -> Ptr LayoutSettings -> Ptr GRHandler -> IO ErrCode
+
+foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
+    Ptr OnDrawDesc -> IO ErrCode
+
+foreign import ccall "GuidoCCreateSystem" cGuidoCCreateSystem :: IO VGSystem
+foreign import ccall "GuidoCCreateSVGSystem" cGuidoCCreateSVGSystem :: IO VGSystem
+foreign import ccall "GuidoCCreateDisplayDevice" cGuidoCCreateDisplayDevice :: VGSystem -> IO VGDevice
+
+
+
 -- struct GuidoInitDesc { 
 --    VGDevice* graphicDevice;
 --    void* reserved;
@@ -42,13 +54,16 @@ foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO Int
 --    const char*  textFont;
 -- };
 
-defInitDesc :: IO (Ptr InitDesc)
-defInitDesc = do
-    ptr <- mallocBytes $ 4 * ptrSize
-    pokeElemOff ptr 0 $ nullPtr
-    pokeElemOff ptr 2 $ nullPtr
-    pokeElemOff ptr 3 $ nullPtr
-    return $ castPtr ptr
+-- defInitDesc :: IO (Ptr InitDesc)
+-- defInitDesc = do
+--     ptr <- mallocBytes $ 4 * ptrSize
+--     pokeElemOff ptr 0 $ nullPtr
+--     pokeElemOff ptr 2 $ nullPtr
+--     pokeElemOff ptr 3 $ nullPtr
+--     return $ castPtr ptr
+
+-- defInitDesc :: InitDesc
+-- defInitDesc = InitDesc nullPtr "Guido2" "Times"
 
 instance Storable InitDesc where
     sizeOf _ = 4 * ptrSize    
@@ -78,6 +93,7 @@ instance Storable InitDesc where
 --     int isprint;
 -- };
 
+
 instance Storable OnDrawDesc where
     sizeOf _ = sz
       where
@@ -98,7 +114,7 @@ instance Storable OnDrawDesc where
         pokeByteOff ptr handle_        $ handle
         pokeByteOff ptr hdc_           $ device
         pokeByteOff ptr page_          $ page
-        pokeByteOff ptr updateRegion_  $ (0::CInt) -- TODO use value
+        pokeByteOff ptr updateRegion_  $ (1::CInt) -- TODO use value
         pokeByteOff ptr scrollX_       $ fst scroll
         pokeByteOff ptr scrollY_       $ snd scroll
         pokeByteOff ptr reserved_      $ reserved
@@ -146,8 +162,8 @@ checkErr a e = case e of
     0 -> return a
     _ -> getErrorString e >>= \e -> error (": " ++ e)
 
-initialize :: (Ptr InitDesc) -> IO ()
-initialize d = cInit d >>= checkErr ()
+initialize :: InitDesc -> IO ()
+initialize d = with d $ \dp -> cInit dp >>= checkErr ()
 
 shutdown :: IO ()
 shutdown = cShutdown
@@ -161,10 +177,24 @@ parseFile path = do
     handleRef <- mallocBytes ptrSize
     err       <- cParseFile cPath handleRef
     handle    <- deref handleRef
-    free cPath               
-    free handleRef
+    -- free cPath               
+    -- free handleRef
     checkErr handle err
 
+-- TODO use layout settings
+ar2gr :: Maybe LayoutSettings -> ARHandler -> IO GRHandler
+ar2gr _ ar = do
+    grRef <- mallocBytes ptrSize
+    err   <- cAR2GR ar nullPtr grRef
+    gr    <- deref grRef
+    -- free grRef
+    checkErr gr err
+
+draw :: OnDrawDesc -> IO ()
+draw d = with d $ \dp -> cGuidoOnDraw dp >>= checkErr ()
+
+-- foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
+    -- Ptr OnDrawDesc -> IO ErrCode
 
 -- GuidoErrCode GuidoParseFile(const char * filename, ARHandler* ar);
 -- GuidoErrCode GuidoParseString(const char * str, ARHandler* ar);
@@ -189,9 +219,19 @@ parseFile path = do
  
 
 
-main = do
-    defInitDesc >>= initialize
-    ar <- parseFile "test.guido"
+main = do              
+    sys <- cGuidoCCreateSystem
+    dev <- cGuidoCCreateDisplayDevice sys
+    let id = InitDesc dev "Guido2" "Arial"
+
+    initialize id
+    ar <- parseFile "test.guido"    
+    gr <- ar2gr Nothing ar
+    putStrLn $ show ar
+    putStrLn $ show gr
+    let od = OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,800) False
+    draw od
+    
     return ()
 
 
