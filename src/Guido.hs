@@ -4,10 +4,12 @@
 module Guido where
 
 import Foreign.Ptr
+import Foreign.ForeignPtr
 import Foreign.Marshal
 import Foreign.Storable
 import Foreign.C 
 import Data.Word
+import Data.Bits 
 
 import Graphics.UI.WX hiding (alignment)
 import Graphics.UI.WXCore.WxcObject
@@ -228,12 +230,13 @@ draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
 -- GuidoErrCode GuidoFactorySetOctave( ARFactoryHandler inFactory, int octave );
 -- GuidoErrCode     GuidoFactorySetDuration( ARFactoryHandler inFactory, int numerator, int denominator );
 
+kDim = (800,1600)
  
 setupTest :: IO (VGDevice, GRHandler)
 setupTest = do              
     sys <- cGuidoCCreateSystem
     -- dev <- cGuidoCCreateDisplayDevice sys
-    dev <- cGuidoCCreateMemoryDevice sys 800 400
+    dev <- cGuidoCCreateMemoryDevice sys (fst kDim) (snd kDim)
 
     initialize $ InitDesc dev "Guido2" "Arial"
 
@@ -246,26 +249,63 @@ setupTest = do
 
 drawTest :: Window a -> VGDevice -> GRHandler -> IO (Ptr Word32)
 drawTest win dev gr = do
-    draw $ OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,400) False
+    draw $ OnDrawDesc gr dev 1 Nothing (0,0) 1 kDim False
     nativePaint dev
 
+getRGBA :: Word32 -> (Word8,Word8,Word8,Word8)
+getRGBA w = (
+    cv $ w `shiftR` r, 
+    cv $ w `shiftR` g, 
+    cv $ w `shiftR` b, 
+    cv $ w `shiftR` a
+    )
+    where                                                                           
+        (r,g,b,a) = (0,8,16,24)
+        cv x = fromIntegral (x .&. 0xff)
+
+rgbaToColor :: Word32 -> Color
+rgbaToColor w = rgb r g b where (r,g,b,_) = getRGBA w
+
+monoToColor :: Word32 -> Color
+monoToColor w = rgb a' a' a' 
+    where 
+        (r,g,b,a) = getRGBA w
+        a' = 255 - a
+
+
 fromRaw :: Int -> Int -> Ptr Word32 -> IO (Image ())    
-fromRaw w h ptr = undefined
+fromRaw w h ptr = do
+    !xs <- peekArray (w*h) ptr
+    -- putStrLn $ show $ xs
+    imageCreateFromPixels (sz w h) (fmap monoToColor xs)
+
+
+-- instance Storable Color where
+    -- peek ptr = do
+    --     peekWord32 ptr
+
+
 
 gui = do
     frame <- frame [text := "Guido Test"]
           
     (!dev,!gr) <- setupTest
 
-    set frame [on paint := \dc rect -> do
-        putStrLn $ show rect
+    set frame [on paint := \dc dim -> do
+        putStrLn $ show dim
         
         rawImg <- drawTest frame dev gr
-        -- img <- fromRaw 800 400 rawImg
+        img <- fromRaw (fst kDim) (snd kDim) rawImg
         -- img <- imageCreateFromFile "/Users/hans/Desktop/grav.png"
-        img <- imageCreateFromPixels (sz 16 16) $ replicate (16^2) black
+        -- img <- imageCreateFromPixels (sz 16 16) $ replicate (16^2) black
 
-        drawImage dc img (pt (rectWidth rect `div` 2) 0) []
+        drawRect dc (rect (pt 0 0) (sz (fst kDim) (snd kDim))) 
+            [                                               
+                penKind := PenTransparent,
+                brushKind := BrushSolid, brushColor := green
+            ]
+        drawImage dc img (pt 0 0) []
+        
 
         return ()
         ]
