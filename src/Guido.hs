@@ -166,13 +166,13 @@ checkErr a e = case e of
     _ -> getErrorString e >>= \e -> error (": " ++ e)
 
 initialize :: InitDesc -> IO ()
-initialize d = with d $ \dp -> cInit dp >>= checkErr ()
+initialize = flip with $ (checkErr () =<<) . cInit
 
 shutdown :: IO ()
 shutdown = cShutdown
 
 getVersionString :: IO String
-getVersionString = cGetVersionStr >>= peekCString
+getVersionString = peekCString =<< cGetVersionStr
 
 parseFile :: FilePath -> IO ARHandler
 parseFile path = do
@@ -180,8 +180,8 @@ parseFile path = do
     handleRef <- mallocBytes ptrSize
     err       <- cParseFile cPath handleRef
     handle    <- deref handleRef
-    -- free cPath               
-    -- free handleRef
+    free cPath               
+    free handleRef
     checkErr handle err
 
 -- TODO use layout settings
@@ -190,11 +190,11 @@ ar2gr _ ar = do
     grRef <- mallocBytes ptrSize
     err   <- cAR2GR ar nullPtr grRef
     gr    <- deref grRef
-    -- free grRef
+    free grRef
     checkErr gr err
 
 draw :: OnDrawDesc -> IO ()
-draw d = with d $ \dp -> cGuidoOnDraw dp >>= checkErr ()
+draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
 
 -- foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
     -- Ptr OnDrawDesc -> IO ErrCode
@@ -221,25 +221,29 @@ draw d = with d $ \dp -> cGuidoOnDraw dp >>= checkErr ()
 
  
 
-test = do              
+setupTest = do              
     sys <- cGuidoCCreateSystem
     dev <- cGuidoCCreateDisplayDevice sys
     let id = InitDesc dev "Guido2" "Arial"
-
     initialize id
     ar <- parseFile "test.guido"    
     gr <- ar2gr Nothing ar
     putStrLn $ show ar
     putStrLn $ show gr
+    return (dev, gr)
+
+drawTest dev gr = do
     let od = OnDrawDesc gr dev 1 Nothing (0,0) 1 (800,800) False
     draw od
-    
     return ()
+    
 
 gui = do
     frame <- frame [text := "Guido Test"]
     -- set frame [on paint := \_ _ -> test]
-    test
+
+    (dev,gr) <- setupTest
+    drawTest dev gr
     return ()
 
 main = start gui
