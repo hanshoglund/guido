@@ -15,45 +15,45 @@ int GuidoCGetVersion() {
 
 // System
 
-CSystem * GuidoCCreateSystem() {
+CVGSystem * GuidoCCreateSystem() {
     // FIXME need to pass CGContextRef as first param here
     /*
        In a WX paint handler:
         wxPaintDC MyDC(this);
         CGContextRef context = ((wxMacCGContext*)MyDC.GetGraphicContext())->GetNativeContext();
      */
-	CSystem * system = (CSystem*) new GSystemOSX(0,0);
+	CVGSystem * system = (CVGSystem*) new GSystemOSX(0,0);
     return system;
 }
 
-CSystem * GuidoCCreateSVGSystem() {
-    CSystem * system = (CSystem*) new SVGSystem();
+CVGSystem * GuidoCCreateSVGSystem() {
+    CVGSystem * system = (CVGSystem*) new SVGSystem();
     return system;
 }
 
-void GuidoCFreeSystem(CSystem * system) {
+void GuidoCFreeSystem(CVGSystem * system) {
 	delete (GSystemOSX*) system;
 }
 
-void GuidoCFreeSVGSystem(CSystem * system) {
+void GuidoCFreeSVGSystem(CVGSystem * system) {
 	delete (SVGSystem*) system;
 }
 
 
-CDevice * GuidoCCreateDisplayDevice(CSystem * system) {
-    return (CDevice*) ((VGSystem*) system)->CreateDisplayDevice();
+CVGDevice * GuidoCCreateDisplayDevice(CVGSystem * system) {
+    return (CVGDevice*) ((VGSystem*) system)->CreateDisplayDevice();
 }
 
-CDevice * GuidoCCreateMemoryDevice(CSystem * system, int width, int height) {
-    return (CDevice*) ((VGSystem*) system)->CreateMemoryDevice(width, height);
+CVGDevice * GuidoCCreateMemoryDevice(CVGSystem * system, int width, int height) {
+    return (CVGDevice*) ((VGSystem*) system)->CreateMemoryDevice(width, height);
 }
 
-CDevice * GuidoCCreateMemoryDevicePath(CSystem * system, const char* path) {
-    return (CDevice*) ((VGSystem*) system)->CreateMemoryDevice(path);
+CVGDevice * GuidoCCreateMemoryDevicePath(CVGSystem * system, const char* path) {
+    return (CVGDevice*) ((VGSystem*) system)->CreateMemoryDevice(path);
 }
 
-CDevice * GuidoCCreatePrinterDevice(CSystem * system) {
-    return (CDevice*) ((VGSystem*) system)->CreatePrinterDevice();
+CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * system) {
+    return (CVGDevice*) ((VGSystem*) system)->CreatePrinterDevice();
 }
 
 

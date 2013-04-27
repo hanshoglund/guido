@@ -6,31 +6,39 @@
     Copyright (c) Hans Höglund 2013. BSD-like license.
  */
 
-typedef void CSystem;
-typedef void CDevice;
+#ifdef __cplusplus
+#include <GuidoEngine/VGSystem.h>
+#include <GuidoEngine/VGDevice.h>
+typedef VGSystem CVGSystem;
+typedef VGDevice CVGDevice;
+#else
+typedef void CVGSystem;
+typedef void CVGDevice;
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
     
-    int GuidoCGetVersion();
 
-    // Create a default system
-    CSystem * GuidoCCreateSystem();
-    void GuidoCFreeSystem(CSystem * system);
-    
-    // Create an SVG system
-    CSystem * GuidoCCreateSVGSystem();
-    void GuidoCFreeSVGSystem(CSystem * system);
+int GuidoCGetVersion();
 
-    CDevice * GuidoCCreateDisplayDevice(CSystem * a);
-    CDevice * GuidoCCreateMemoryDevice(CSystem * a, int width, int height);
-    CDevice * GuidoCCreateMemoryDevicePath(CSystem * a, const char* path);
-    CDevice * GuidoCCreatePrinterDevice(CSystem * a);
-    
-    
-    void GuidoCBeginContext();
-    void GuidoCEndContext();
+CVGSystem * GuidoCCreateSystem();
+CVGSystem * GuidoCCreateSVGSystem();
+
+void GuidoCFreeSystem(CVGSystem * system);
+void GuidoCFreeSVGSystem(CVGSystem * system);
+
+CVGDevice * GuidoCCreateDisplayDevice(CVGSystem * a);
+CVGDevice * GuidoCCreateMemoryDevice(CVGSystem * a, int width, int height);
+CVGDevice * GuidoCCreateMemoryDevicePath(CVGSystem * a, const char* path);
+CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * a);
+
+void GuidoCBeginContext();
+void GuidoCEndContext();
+
+
 
 #ifdef __cplusplus
 }
