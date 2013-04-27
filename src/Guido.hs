@@ -272,17 +272,10 @@ monoToColor w = rgb a' a' a'
         (r,g,b,a) = getRGBA w
         a' = 255 - a
 
-
 fromRaw :: Int -> Int -> Ptr Word32 -> IO (Image ())    
 fromRaw w h ptr = do
     !xs <- peekArray (w*h) ptr
-    -- putStrLn $ show $ xs
     imageCreateFromPixels (sz w h) (fmap monoToColor xs)
-
-
--- instance Storable Color where
-    -- peek ptr = do
-    --     peekWord32 ptr
 
 
 
@@ -304,7 +297,7 @@ gui = do
                 penKind := PenTransparent,
                 brushKind := BrushSolid, brushColor := green
             ]
-        drawImage dc img (pt 0 0) []
+        drawImage dc img (pt (rectWidth dim `div` 2) (rectHeight dim `div` 2)) []
         
 
         return ()
