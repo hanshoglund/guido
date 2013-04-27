@@ -9,11 +9,11 @@
 #ifdef __cplusplus
 #include <GuidoEngine/VGSystem.h>
 #include <GuidoEngine/VGDevice.h>
-typedef VGSystem CVGSystem;
-typedef VGDevice CVGDevice;
+typedef VGSystem GuidoCGraphicSystem;
+typedef VGDevice GuidoCGraphicDevice;
 #else
-typedef void CVGSystem;
-typedef void CVGDevice;
+typedef void GuidoCGraphicSystem;
+typedef void GuidoCGraphicDevice;
 #endif
 
 
@@ -24,25 +24,25 @@ extern "C" {
 
 /** Return the version of guido-c (not to be confused with the guido version).
  */
-int GuidoCGetVersion();
+const char*           GuidoCGetVersion();
 
 /** Create the default system.
  */
-CVGSystem * GuidoCCreateSystem();
-void        GuidoCFreeSystem(CVGSystem * system);
+GuidoCGraphicSystem * GuidoCCreateSystem();
+void                  GuidoCFreeSystem(GuidoCGraphicSystem * system);
 
 /** Create an SVG system.
  */
-CVGSystem * GuidoCCreateSVGSystem();
-void        GuidoCFreeSVGSystem(CVGSystem * system);
+GuidoCGraphicSystem * GuidoCCreateSVGSystem();
+void                  GuidoCFreeSVGSystem(GuidoCGraphicSystem * system);
 
-CVGDevice * GuidoCCreateDisplayDevice(CVGSystem * a);
-CVGDevice * GuidoCCreateMemoryDevice(CVGSystem * a, int width, int height);
-CVGDevice * GuidoCCreateMemoryDevicePath(CVGSystem * a, const char* path);
-CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * a);
+GuidoCGraphicDevice * GuidoCCreateDisplayDevice(GuidoCGraphicSystem * a);
+GuidoCGraphicDevice * GuidoCCreateMemoryDevice(GuidoCGraphicSystem * a, int width, int height);
+GuidoCGraphicDevice * GuidoCCreateMemoryDevicePath(GuidoCGraphicSystem * a, const char* path);
+GuidoCGraphicDevice * GuidoCCreatePrinterDevice(GuidoCGraphicSystem * a);
 
-uint32_t*   GuidoCNativePaint(CVGDevice * device);
-void        GuidoCPrintDeviceInfo(CVGDevice * device);
+uint32_t*             GuidoCNativePaint(GuidoCGraphicDevice * device);
+void                  GuidoCPrintDeviceInfo(GuidoCGraphicDevice * device);
 
 
 

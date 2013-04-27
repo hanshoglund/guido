@@ -11,13 +11,13 @@
 
 // const char *byte_to_binary(int x);
 
-int GuidoCGetVersion() {
-    return 2;
+const char* GuidoCGetVersion() {
+    return "0.5.0";
 }
 
 // System
 
-CVGSystem * GuidoCCreateSystem() {
+GuidoCGraphicSystem * GuidoCCreateSystem() {
     fprintf(stderr, "Creating system!\n");
 
     // FIXME need to pass CGContextRef as first param here
@@ -26,17 +26,17 @@ CVGSystem * GuidoCCreateSystem() {
         wxPaintDC MyDC(this);
         CGContextRef context = ((wxMacCGContext*)MyDC.GetGraphicContext())->GetNativeContext();
      */
-	CVGSystem * system = (CVGSystem*) new GSystemOSX(0,0);
+	GuidoCGraphicSystem * system = (GuidoCGraphicSystem*) new GSystemOSX(0,0);
     return system;
 }
 
-uint32_t* GuidoCNativePaint(CVGDevice * device) {
+uint32_t* GuidoCNativePaint(GuidoCGraphicDevice * device) {
     CGContextRef context = CGContextRef(((VGDevice*) device)->GetNativeContext());
     uint32_t* data = (uint32_t*)::CGBitmapContextGetData(context); 
     return data;
 }
 
-void GuidoCPrintDeviceInfo(CVGDevice * device) {
+void GuidoCPrintDeviceInfo(GuidoCGraphicDevice * device) {
     CGContextRef context = CGContextRef(((VGDevice*) device)->GetNativeContext());
     uint32_t* data = (uint32_t*)::CGBitmapContextGetData(context); 
 
@@ -69,34 +69,34 @@ void GuidoCPrintDeviceInfo(CVGDevice * device) {
 }
 
 
-CVGSystem * GuidoCCreateSVGSystem() {
-    CVGSystem * system = (CVGSystem*) new SVGSystem();
+GuidoCGraphicSystem * GuidoCCreateSVGSystem() {
+    GuidoCGraphicSystem * system = (GuidoCGraphicSystem*) new SVGSystem();
     return system;
 }
 
-void GuidoCFreeSystem(CVGSystem * system) {
+void GuidoCFreeSystem(GuidoCGraphicSystem * system) {
 	delete (GSystemOSX*) system;
 }
 
-void GuidoCFreeSVGSystem(CVGSystem * system) {
+void GuidoCFreeSVGSystem(GuidoCGraphicSystem * system) {
 	delete (SVGSystem*) system;
 }
 
 
-CVGDevice * GuidoCCreateDisplayDevice(CVGSystem * system) {
-    return (CVGDevice*) ((VGSystem*) system)->CreateDisplayDevice();
+GuidoCGraphicDevice * GuidoCCreateDisplayDevice(GuidoCGraphicSystem * system) {
+    return (GuidoCGraphicDevice*) ((VGSystem*) system)->CreateDisplayDevice();
 }
 
-CVGDevice * GuidoCCreateMemoryDevice(CVGSystem * system, int width, int height) {
-    return (CVGDevice*) ((VGSystem*) system)->CreateMemoryDevice(width, height);
+GuidoCGraphicDevice * GuidoCCreateMemoryDevice(GuidoCGraphicSystem * system, int width, int height) {
+    return (GuidoCGraphicDevice*) ((VGSystem*) system)->CreateMemoryDevice(width, height);
 }
 
-CVGDevice * GuidoCCreateMemoryDevicePath(CVGSystem * system, const char* path) {
-    return (CVGDevice*) ((VGSystem*) system)->CreateMemoryDevice(path);
+GuidoCGraphicDevice * GuidoCCreateMemoryDevicePath(GuidoCGraphicSystem * system, const char* path) {
+    return (GuidoCGraphicDevice*) ((VGSystem*) system)->CreateMemoryDevice(path);
 }
 
-CVGDevice * GuidoCCreatePrinterDevice(CVGSystem * system) {
-    return (CVGDevice*) ((VGSystem*) system)->CreatePrinterDevice();
+GuidoCGraphicDevice * GuidoCCreatePrinterDevice(GuidoCGraphicSystem * system) {
+    return (GuidoCGraphicDevice*) ((VGSystem*) system)->CreatePrinterDevice();
 }
 
 

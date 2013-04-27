@@ -40,7 +40,7 @@ foreign import ccall "GuidoGetErrorString" cGetErrorString :: ErrCode -> CString
 foreign import ccall "GuidoParseFile"      cParseFile      :: CString -> Ptr ARHandler -> IO ErrCode
 foreign import ccall "GuidoParseString"    cParseString    :: CString -> Ptr ARHandler -> IO ErrCode
 
-foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO Int
+foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO CString
 
 foreign import ccall "GuidoAR2GR"       cAR2GR  :: 
     ARHandler -> Ptr LayoutSettings -> Ptr GRHandler -> IO ErrCode
