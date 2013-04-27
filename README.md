@@ -11,6 +11,7 @@ Haskell bindings to the [GUIDO Engine][guido-engine].
 * Compile the `guido-c` library using the Makefile.
 * Add the following to your `.cabal` file:
 
+&nbsp;
     frameworks:
         GUIDOEngine
     extra-libraries:
