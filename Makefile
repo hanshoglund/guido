@@ -14,7 +14,7 @@ libguidoc.dylib:
 	-framework GUIDOEngine \
 	-framework QuartzCore \
 	-framework Cocoa \
-	-o libguidoc.dylib src/guido-c.cpp src/guido-c-osx.m
+	-o libguidoc.dylib src/guido-c.cpp
 
 clean:
 	rm -f libguidoc.dylib
