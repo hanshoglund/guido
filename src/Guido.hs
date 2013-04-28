@@ -1,7 +1,17 @@
 
 {-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls, BangPatterns #-}
 
-module Guido where
+module Guido (
+    getErrorString,
+    initialize,
+    shutdown,
+    getVersionString,
+    parseFile,
+    ar2gr,
+    draw,
+    
+    main -- TODO
+) where
 
 import Foreign.Ptr
 import Foreign.ForeignPtr
@@ -26,60 +36,75 @@ data GRHandler_
 data VGSystem_
 data VGDevice_
 
-data InitDesc       = InitDesc VGDevice String String
+data InitDesc 
+    = InitDesc 
+        VGDevice 
+        String 
+        String
     deriving (Eq, Ord, Show)
-data OnDrawDesc     = OnDrawDesc GRHandler VGDevice Int (Maybe (Int,Int,Int,Int)) (Int,Int) Float (Int,Int) Bool
+
+data OnDrawDesc 
+    = OnDrawDesc 
+        GRHandler 
+        VGDevice 
+        Int 
+        (Maybe (Int,Int,Int,Int)) 
+        (Int,Int) 
+        Float 
+        (Int,Int) 
+        Bool
     deriving (Eq, Ord, Show)
+
 data LayoutSettings
 
-foreign import ccall "GuidoInit"           cInit           :: Ptr InitDesc -> IO ErrCode;
-foreign import ccall "GuidoShutdown"       cShutdown       :: IO ()
-foreign import ccall "GuidoGetVersionStr"  cGetVersionStr  :: IO CString
-foreign import ccall "GuidoGetErrorString" cGetErrorString :: ErrCode -> CString
+foreign import ccall "GuidoInit"            
+    cInit                                       :: Ptr InitDesc -> IO ErrCode
 
-foreign import ccall "GuidoParseFile"      cParseFile      :: CString -> Ptr ARHandler -> IO ErrCode
-foreign import ccall "GuidoParseString"    cParseString    :: CString -> Ptr ARHandler -> IO ErrCode
+foreign import ccall "GuidoShutdown"        
+    cShutdown                                   :: IO ()
 
-foreign import ccall "GuidoCGetVersion" cCGetVersion :: IO CString
+foreign import ccall "GuidoCGetVersion"     
+    cCGetVersion                                :: IO CString
 
-foreign import ccall "GuidoAR2GR"       cAR2GR  :: 
-    ARHandler -> Ptr LayoutSettings -> Ptr GRHandler -> IO ErrCode
+foreign import ccall "GuidoGetVersionStr"   
+    cGetVersionStr                              :: IO CString
 
-foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
-    Ptr OnDrawDesc -> IO ErrCode
+foreign import ccall "GuidoGetErrorString"  
+    cGetErrorString                             :: ErrCode -> CString
 
-foreign import ccall "GuidoCCreateSystem" cGuidoCCreateSystem :: IO VGSystem
-foreign import ccall "GuidoCCreateSVGSystem" cGuidoCCreateSVGSystem :: IO VGSystem
-foreign import ccall "GuidoCCreateDisplayDevice" cGuidoCCreateDisplayDevice :: VGSystem -> IO VGDevice
-foreign import ccall "GuidoCCreateMemoryDevice" cGuidoCCreateMemoryDevice :: VGSystem -> Int -> Int -> IO VGDevice
+foreign import ccall "GuidoParseFile"       
+    cParseFile                                  :: CString -> Ptr ARHandler -> IO ErrCode
 
-foreign import ccall "GuidoCGraphicDeviceSetRasterMode" cGuidoCGraphicDeviceSetRasterMode ::
-    VGDevice -> Int -> IO ()
+foreign import ccall "GuidoParseString"     
+    cParseString                                :: CString -> Ptr ARHandler -> IO ErrCode
 
-foreign import ccall "GuidoCNativePaint" cGuidoCNativePaint :: VGDevice -> IO (Ptr Word32)
+foreign import ccall "GuidoAR2GR"           
+    cAR2GR                                      :: ARHandler -> Ptr LayoutSettings -> Ptr GRHandler -> IO ErrCode
+
+foreign import ccall "GuidoOnDraw"
+    cGuidoOnDraw                                :: Ptr OnDrawDesc -> IO ErrCode
+
+foreign import ccall "GuidoCCreateSystem"         
+    cGuidoCCreateSystem                         :: IO VGSystem
+
+foreign import ccall "GuidoCCreateSVGSystem"      
+    cGuidoCCreateSVGSystem                      :: IO VGSystem
+
+foreign import ccall "GuidoCCreateDisplayDevice"  
+    cGuidoCCreateDisplayDevice                  :: VGSystem -> IO VGDevice
+
+foreign import ccall "GuidoCCreateMemoryDevice"   
+    cGuidoCCreateMemoryDevice                   :: VGSystem -> Int -> Int -> IO VGDevice
+
+foreign import ccall "GuidoCGraphicDeviceSetRasterMode" 
+    cGuidoCGraphicDeviceSetRasterMode           :: VGDevice -> Int -> IO ()
+
+foreign import ccall "GuidoCNativePaint" 
+    cGuidoCNativePaint                          :: VGDevice -> IO (Ptr Word32)
 
 nativePaint :: VGDevice -> IO (Ptr Word32)
 nativePaint = cGuidoCNativePaint
 
-
-
--- struct GuidoInitDesc { 
---    VGDevice* graphicDevice;
---    void* reserved;
---    const char* musicFont;
---    const char*  textFont;
--- };
-
--- defInitDesc :: IO (Ptr InitDesc)
--- defInitDesc = do
---     ptr <- mallocBytes $ 4 * ptrSize
---     pokeElemOff ptr 0 $ nullPtr
---     pokeElemOff ptr 2 $ nullPtr
---     pokeElemOff ptr 3 $ nullPtr
---     return $ castPtr ptr
-
--- defInitDesc :: InitDesc
--- defInitDesc = InitDesc nullPtr "Guido2" "Times"
 
 instance Storable InitDesc where
     sizeOf _ = 4 * ptrSize    
@@ -91,24 +116,6 @@ instance Storable InitDesc where
         pokeByteOff ptr (ptrSize*0) $ castPtr $ device
         pokeByteOff ptr (ptrSize*2) $ castPtr $ cMusicFont
         pokeByteOff ptr (ptrSize*3) $ castPtr $ cTextFont
-
--- struct GuidoOnDrawDesc {
---     GRHandler handle;
---     VGDevice * hdc;
---     int page;
---     struct {
---          bool	erase;
---          int		left;
---          int		top;
---          int		right;
---          int		bottom;
---     } updateRegion;
---     int scrollx, scrolly;
---     float reserved;
---     int sizex, sizey;
---     int isprint;
--- };
-
 
 instance Storable OnDrawDesc where
     sizeOf _ = sz
@@ -160,12 +167,6 @@ instance Storable OnDrawDesc where
 --  int optimalPageFill;
 -- };
  
-
-
-
-
-
-
 
 
 
