@@ -2,6 +2,14 @@
 {-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls, BangPatterns #-}
 
 module Guido (
+    ErrCode,
+    ARHandler,
+    GRHandler,
+    VGSystem,    
+    VGDevice,
+    InitDesc(..),      
+    OnDrawDesc(..),
+    LayoutSettings,
     getErrorString,
     initialize,
     shutdown,
