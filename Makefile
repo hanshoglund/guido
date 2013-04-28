@@ -1,5 +1,5 @@
 
-run: lib
+run:
 	cabal build && dist/build/guido-test/guido-test
 test: lib
 	ghci -framework GUIDOEngine -lguidoc src/Guido.hs

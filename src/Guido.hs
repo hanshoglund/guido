@@ -53,7 +53,9 @@ foreign import ccall "GuidoCCreateSVGSystem" cGuidoCCreateSVGSystem :: IO VGSyst
 foreign import ccall "GuidoCCreateDisplayDevice" cGuidoCCreateDisplayDevice :: VGSystem -> IO VGDevice
 foreign import ccall "GuidoCCreateMemoryDevice" cGuidoCCreateMemoryDevice :: VGSystem -> Int -> Int -> IO VGDevice
 
--- window -> device -> IO ()
+foreign import ccall "GuidoCGraphicDeviceSetRasterMode" cGuidoCGraphicDeviceSetRasterMode ::
+    VGDevice -> Int -> IO ()
+
 foreign import ccall "GuidoCNativePaint" cGuidoCNativePaint :: VGDevice -> IO (Ptr Word32)
 
 nativePaint :: VGDevice -> IO (Ptr Word32)

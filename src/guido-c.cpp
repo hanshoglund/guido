@@ -96,6 +96,10 @@ GuidoCGraphicDevice * GuidoCCreatePrinterDevice(GuidoCGraphicSystem * system)
         return (GuidoCGraphicDevice*) ((VGSystem*) system)->CreatePrinterDevice();
 }
 
+void GuidoCGraphicDeviceSetRasterMode(GuidoCGraphicDevice * device, GuidoCRasterMode mode)
+{
+    ((VGDevice*) device)->SetRasterOpMode(mode);
+}
 
 
 

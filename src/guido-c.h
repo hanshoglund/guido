@@ -9,11 +9,13 @@
 #ifdef __cplusplus
 #include <GuidoEngine/VGSystem.h>
 #include <GuidoEngine/VGDevice.h>
-typedef VGSystem GuidoCGraphicSystem;
-typedef VGDevice GuidoCGraphicDevice;
+typedef VGSystem                    GuidoCGraphicSystem;
+typedef VGDevice                    GuidoCGraphicDevice;
+typedef VGDevice::VRasterOpMode     GuidoCRasterMode;
 #else
-typedef void GuidoCGraphicSystem;
-typedef void GuidoCGraphicDevice;
+typedef void                        GuidoCGraphicSystem;
+typedef void                        GuidoCGraphicDevice;
+typedef int                         GuidoCRasterMode;
 #endif
 
 
@@ -44,6 +46,9 @@ GuidoCGraphicDevice * GuidoCCreatePrinterDevice(GuidoCGraphicSystem * a);
 uint32_t*             GuidoCNativePaint(GuidoCGraphicDevice * device);
 void                  GuidoCPrintDeviceInfo(GuidoCGraphicDevice * device);
 
+/** Set raster mode
+ */
+void		          GuidoCGraphicDeviceSetRasterMode(GuidoCGraphicDevice * device, GuidoCRasterMode mode);
 
 
 
