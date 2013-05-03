@@ -27,5 +27,13 @@ You may need to add the following to the `.cabal` file in your project:
     extra-libraries:
         guidoc
     
+### Linux
+
+Not tested yet.
+
+### Windows
+
+Not tested yet.
+
 
 [guido-engine]: http://guidolib.sourceforge.net/
