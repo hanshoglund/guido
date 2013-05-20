@@ -300,8 +300,6 @@ gui = do
         
         rawImg <- drawTest frame dev gr
         img <- fromRaw (fst kDim) (snd kDim) rawImg
-        -- img <- imageCreateFromFile "/Users/hans/Desktop/grav.png"
-        -- img <- imageCreateFromPixels (sz 16 16) $ replicate (16^2) black
 
         drawRect dc (rect (pt 0 0) (sz (fst kDim) (snd kDim))) 
             [                                               
