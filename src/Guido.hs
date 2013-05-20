@@ -3,10 +3,10 @@
 
 module Guido (
     ErrCode,
-    ARHandler,
-    GRHandler,
-    VGSystem,    
-    VGDevice,
+    AbstractRepr,
+    GraphicRepr,
+    GraphicsSystem,    
+    GraphicsDevice,
     InitDesc(..),      
     OnDrawDesc(..),
     LayoutSettings,
@@ -34,27 +34,27 @@ import Graphics.UI.WXCore.WxcObject
 import Graphics.UI.WXCore.WxcClassTypes
 
 type ErrCode   = CInt
-type ARHandler      = Ptr ARHandler_
-type GRHandler      = Ptr GRHandler_
-type VGSystem       = Ptr VGSystem_
-type VGDevice       = Ptr VGDevice_
+type AbstractRepr      = Ptr AbstractRepr_
+type GraphicRepr      = Ptr GraphicRepr_
+type GraphicsSystem       = Ptr GraphicsSystem_
+type GraphicsDevice       = Ptr GraphicsDevice_
 
-data ARHandler_
-data GRHandler_                                             
-data VGSystem_
-data VGDevice_
+data AbstractRepr_
+data GraphicRepr_                                             
+data GraphicsSystem_
+data GraphicsDevice_
 
 data InitDesc 
     = InitDesc 
-        VGDevice 
+        GraphicsDevice 
         String 
         String
     deriving (Eq, Ord, Show)
 
 data OnDrawDesc 
     = OnDrawDesc 
-        GRHandler 
-        VGDevice 
+        GraphicRepr 
+        GraphicsDevice 
         Int 
         (Maybe (Int,Int,Int,Int)) 
         (Int,Int) 
@@ -81,36 +81,36 @@ foreign import ccall "GuidoGetErrorString"
     cGetErrorString                             :: ErrCode -> CString
 
 foreign import ccall "GuidoParseFile"       
-    cParseFile                                  :: CString -> Ptr ARHandler -> IO ErrCode
+    cParseFile                                  :: CString -> Ptr AbstractRepr -> IO ErrCode
 
 foreign import ccall "GuidoParseString"     
-    cParseString                                :: CString -> Ptr ARHandler -> IO ErrCode
+    cParseString                                :: CString -> Ptr AbstractRepr -> IO ErrCode
 
 foreign import ccall "GuidoAR2GR"           
-    cAR2GR                                      :: ARHandler -> Ptr LayoutSettings -> Ptr GRHandler -> IO ErrCode
+    cAR2GR                                      :: AbstractRepr -> Ptr LayoutSettings -> Ptr GraphicRepr -> IO ErrCode
 
 foreign import ccall "GuidoOnDraw"
     cGuidoOnDraw                                :: Ptr OnDrawDesc -> IO ErrCode
 
 foreign import ccall "GuidoCCreateSystem"         
-    cGuidoCCreateSystem                         :: IO VGSystem
+    cGuidoCCreateSystem                         :: IO GraphicsSystem
 
 foreign import ccall "GuidoCCreateSVGSystem"      
-    cGuidoCCreateSVGSystem                      :: IO VGSystem
+    cGuidoCCreateSVGSystem                      :: IO GraphicsSystem
 
 foreign import ccall "GuidoCCreateDisplayDevice"  
-    cGuidoCCreateDisplayDevice                  :: VGSystem -> IO VGDevice
+    cGuidoCCreateDisplayDevice                  :: GraphicsSystem -> IO GraphicsDevice
 
 foreign import ccall "GuidoCCreateMemoryDevice"   
-    cGuidoCCreateMemoryDevice                   :: VGSystem -> Int -> Int -> IO VGDevice
+    cGuidoCCreateMemoryDevice                   :: GraphicsSystem -> Int -> Int -> IO GraphicsDevice
 
 foreign import ccall "GuidoCGraphicDeviceSetRasterMode" 
-    cGuidoCGraphicDeviceSetRasterMode           :: VGDevice -> Int -> IO ()
+    cGuidoCGraphicDeviceSetRasterMode           :: GraphicsDevice -> Int -> IO ()
 
 foreign import ccall "GuidoCNativePaint" 
-    cGuidoCNativePaint                          :: VGDevice -> IO (Ptr Word32)
+    cGuidoCNativePaint                          :: GraphicsDevice -> IO (Ptr Word32)
 
-nativePaint :: VGDevice -> IO (Ptr Word32)
+nativePaint :: GraphicsDevice -> IO (Ptr Word32)
 nativePaint = cGuidoCNativePaint
 
 
@@ -182,6 +182,7 @@ instance Storable OnDrawDesc where
 getErrorString :: ErrCode -> IO String
 getErrorString = peekCString . cGetErrorString
 
+-- Fail if the given error code is non-zero, otherwise return the given value.
 checkErr :: a -> ErrCode -> IO a
 checkErr a e = case e of
     0 -> return a
@@ -197,7 +198,7 @@ getVersionString :: IO String
 getVersionString = peekCString =<< cGetVersionStr
 
 -- | Parse a Guido file.
-parseFile :: FilePath -> IO ARHandler
+parseFile :: FilePath -> IO AbstractRepr
 parseFile path = do
     cPath     <- newCString path
     handleRef <- mallocBytes ptrSize
@@ -208,7 +209,7 @@ parseFile path = do
     checkErr handle err
 
 -- TODO use layout settings
-abstractToGraphicRepr :: Maybe LayoutSettings -> ARHandler -> IO GRHandler
+abstractToGraphicRepr :: Maybe LayoutSettings -> AbstractRepr -> IO GraphicRepr
 abstractToGraphicRepr _ ar = do
     grRef <- mallocBytes ptrSize
     err   <- cAR2GR ar nullPtr grRef
@@ -246,7 +247,7 @@ draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
 
 kDim = (800,1600)
  
-setupTest :: IO (VGDevice, GRHandler)
+setupTest :: IO (GraphicsDevice, GraphicRepr)
 setupTest = do              
     sys <- cGuidoCCreateSystem
     -- dev <- cGuidoCCreateDisplayDevice sys
@@ -261,7 +262,7 @@ setupTest = do
     putStrLn $ show gr
     return (dev, gr)
 
-drawTest :: Window a -> VGDevice -> GRHandler -> IO (Ptr Word32)
+drawTest :: Window a -> GraphicsDevice -> GraphicRepr -> IO (Ptr Word32)
 drawTest win dev gr = do
     draw $ OnDrawDesc gr dev 1 Nothing (0,0) 1 kDim False
     nativePaint dev
@@ -308,7 +309,7 @@ gui = do
         drawRect dc (rect (pt 0 0) (sz (fst kDim) (snd kDim))) 
             [                                               
                 penKind := PenTransparent,
-                brushKind := BrushSolid, brushColor := green
+                brushKind := BrushSolid, brushColor := black
             ]
         drawImage dc img (pt 10 10) []
         return ()
