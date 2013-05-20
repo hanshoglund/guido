@@ -15,7 +15,7 @@ module Guido (
     shutdown,
     getVersionString,
     parseFile,
-    ar2gr,
+    abstractToGraphicRepr,
     draw,
     
     main -- TODO
@@ -196,6 +196,7 @@ shutdown = cShutdown
 getVersionString :: IO String
 getVersionString = peekCString =<< cGetVersionStr
 
+-- | Parse a Guido file.
 parseFile :: FilePath -> IO ARHandler
 parseFile path = do
     cPath     <- newCString path
@@ -207,8 +208,8 @@ parseFile path = do
     checkErr handle err
 
 -- TODO use layout settings
-ar2gr :: Maybe LayoutSettings -> ARHandler -> IO GRHandler
-ar2gr _ ar = do
+abstractToGraphicRepr :: Maybe LayoutSettings -> ARHandler -> IO GRHandler
+abstractToGraphicRepr _ ar = do
     grRef <- mallocBytes ptrSize
     err   <- cAR2GR ar nullPtr grRef
     gr    <- deref grRef
@@ -241,6 +242,8 @@ draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
 -- GuidoErrCode GuidoFactorySetOctave( ARFactoryHandler inFactory, int octave );
 -- GuidoErrCode     GuidoFactorySetDuration( ARFactoryHandler inFactory, int numerator, int denominator );
 
+
+
 kDim = (800,1600)
  
 setupTest :: IO (VGDevice, GRHandler)
@@ -252,7 +255,7 @@ setupTest = do
     initialize $ InitDesc dev "Guido2" "Arial"
 
     ar <- parseFile "test.gmn" -- parse requires initialize (don't ask!)    
-    gr <- ar2gr Nothing ar
+    gr <- abstractToGraphicRepr Nothing ar
 
     putStrLn $ show ar
     putStrLn $ show gr
@@ -295,8 +298,9 @@ gui = do
           
     (!dev,!gr) <- setupTest
 
-    set frame [on paint := \dc dim -> do
+    let draw = \dc dim -> do
         putStrLn $ show dim
+        dcClear dc
         
         rawImg <- drawTest frame dev gr
         img <- fromRaw (fst kDim) (snd kDim) rawImg
@@ -306,11 +310,11 @@ gui = do
                 penKind := PenTransparent,
                 brushKind := BrushSolid, brushColor := green
             ]
-        drawImage dc img (pt (rectWidth dim `div` 2) (rectHeight dim `div` 2)) []
-        
-
+        drawImage dc img (pt 10 10) []
         return ()
-        ]
+
+    set frame [on paint := draw]
+    repaint frame
     return ()
 
 main = start gui
