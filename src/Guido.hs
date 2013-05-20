@@ -7,14 +7,15 @@ module Guido (
     GraphicRepr,
     GraphicsSystem,    
     GraphicsDevice,
-    InitDesc(..),      
-    OnDrawDesc(..),
+    InitParams(..),      
+    DrawParams(..),
     LayoutSettings,
     getErrorString,
     initialize,
     shutdown,
     getVersionString,
-    parseFile,
+    parseFile,  
+    parseString,
     abstractToGraphicRepr,
     draw,
     
@@ -44,15 +45,15 @@ data GraphicRepr_
 data GraphicsSystem_
 data GraphicsDevice_
 
-data InitDesc 
-    = InitDesc 
+data InitParams 
+    = InitParams 
         GraphicsDevice 
         String 
         String
     deriving (Eq, Ord, Show)
 
-data OnDrawDesc 
-    = OnDrawDesc 
+data DrawParams 
+    = DrawParams 
         GraphicRepr 
         GraphicsDevice 
         Int 
@@ -66,7 +67,7 @@ data OnDrawDesc
 data LayoutSettings
 
 foreign import ccall "GuidoInit"            
-    cInit                                       :: Ptr InitDesc -> IO ErrCode
+    cInit                                       :: Ptr InitParams -> IO ErrCode
 
 foreign import ccall "GuidoShutdown"        
     cShutdown                                   :: IO ()
@@ -90,7 +91,7 @@ foreign import ccall "GuidoAR2GR"
     cAR2GR                                      :: AbstractRepr -> Ptr LayoutSettings -> Ptr GraphicRepr -> IO ErrCode
 
 foreign import ccall "GuidoOnDraw"
-    cGuidoOnDraw                                :: Ptr OnDrawDesc -> IO ErrCode
+    cGuidoOnDraw                                :: Ptr DrawParams -> IO ErrCode
 
 foreign import ccall "GuidoCCreateSystem"         
     cGuidoCCreateSystem                         :: IO GraphicsSystem
@@ -114,18 +115,18 @@ nativePaint :: GraphicsDevice -> IO (Ptr Word32)
 nativePaint = cGuidoCNativePaint
 
 
-instance Storable InitDesc where
+instance Storable InitParams where
     sizeOf _ = 4 * ptrSize    
     alignment _ = ptrAlignment
-    peek = error "InitDesc: no peek"    
-    poke ptr (InitDesc device musicFont textFont) = do
+    peek = error "InitParams: no peek"    
+    poke ptr (InitParams device musicFont textFont) = do
         cMusicFont <- newCString musicFont
         cTextFont  <- newCString textFont
         pokeByteOff ptr (ptrSize*0) $ castPtr $ device
         pokeByteOff ptr (ptrSize*2) $ castPtr $ cMusicFont
         pokeByteOff ptr (ptrSize*3) $ castPtr $ cTextFont
 
-instance Storable OnDrawDesc where
+instance Storable DrawParams where
     sizeOf _ = sz
       where
         handle_         = 0
@@ -141,7 +142,7 @@ instance Storable OnDrawDesc where
         sz              = isPrint_      + intSize
 
     alignment _ = ptrAlignment
-    poke ptr (OnDrawDesc handle device page updateRegion scroll reserved size isPrint) = do
+    poke ptr (DrawParams handle device page updateRegion scroll reserved size isPrint) = do
         pokeByteOff ptr handle_        $ handle
         pokeByteOff ptr hdc_           $ device
         pokeByteOff ptr page_          $ page
@@ -182,22 +183,27 @@ instance Storable OnDrawDesc where
 getErrorString :: ErrCode -> IO String
 getErrorString = peekCString . cGetErrorString
 
--- Fail if the given error code is non-zero, otherwise return the given value.
+-- | Fail if the given error code is non-zero, otherwise return the given value.
 checkErr :: a -> ErrCode -> IO a
 checkErr a e = case e of
     0 -> return a
     _ -> getErrorString e >>= \e -> error (": " ++ e)
 
-initialize :: InitDesc -> IO ()
+-- | 
+-- Initialises the Guido Engine. Must be called before any attempt to read a Guido file or to use the
+-- Guido Factory. The given device must be used throghout the session.
+initialize :: InitParams -> IO ()
 initialize = flip with $ (checkErr () =<<) . cInit
 
+-- | Shutdown Guido engine.
 shutdown :: IO ()
 shutdown = cShutdown
 
+-- | Get verison of the Guido engine.
 getVersionString :: IO String
 getVersionString = peekCString =<< cGetVersionStr
 
--- | Parse a Guido file.
+-- | Parse a Guido (.gmn) file.
 parseFile :: FilePath -> IO AbstractRepr
 parseFile path = do
     cPath     <- newCString path
@@ -208,7 +214,12 @@ parseFile path = do
     free handleRef
     checkErr handle err
 
--- TODO use layout settings
+-- | Parse a Guido string.
+parseString :: String -> IO AbstractRepr
+parseString str = error "Not implemented"
+
+
+-- | Convert an abstract to a graphic representation.
 abstractToGraphicRepr :: Maybe LayoutSettings -> AbstractRepr -> IO GraphicRepr
 abstractToGraphicRepr _ ar = do
     grRef <- mallocBytes ptrSize
@@ -217,11 +228,12 @@ abstractToGraphicRepr _ ar = do
     free grRef
     checkErr gr err
 
-draw :: OnDrawDesc -> IO ()
+-- | Draw a graphic representation to a device.
+draw :: DrawParams -> IO ()
 draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
 
 -- foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
-    -- Ptr OnDrawDesc -> IO ErrCode
+    -- Ptr DrawParams -> IO ErrCode
 
 -- GuidoErrCode GuidoParseFile(const char * filename, ARHandler* ar);
 -- GuidoErrCode GuidoParseString(const char * str, ARHandler* ar);
@@ -253,7 +265,7 @@ setupTest = do
     -- dev <- cGuidoCCreateDisplayDevice sys
     dev <- cGuidoCCreateMemoryDevice sys (fst kDim) (snd kDim)
 
-    initialize $ InitDesc dev "Guido2" "Arial"
+    initialize $ InitParams dev "Guido2" "Arial"
 
     ar <- parseFile "test.gmn" -- parse requires initialize (don't ask!)    
     gr <- abstractToGraphicRepr Nothing ar
@@ -264,7 +276,7 @@ setupTest = do
 
 drawTest :: Window a -> GraphicsDevice -> GraphicRepr -> IO (Ptr Word32)
 drawTest win dev gr = do
-    draw $ OnDrawDesc gr dev 1 Nothing (0,0) 1 kDim False
+    draw $ DrawParams gr dev 1 Nothing (0,0) 1 kDim False
     nativePaint dev
 
 getRGBA :: Word32 -> (Word8,Word8,Word8,Word8)
