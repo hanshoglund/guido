@@ -10,13 +10,17 @@ module Guido (
     InitParams(..),      
     DrawParams(..),
     LayoutSettings,
+    
     getErrorString,
     initialize,
     shutdown,
     getVersionString,
+    
     parseFile,  
     parseString,
     abstractToGraphicRepr,
+    
+    getPageCount,
     draw,
     
     main -- TODO
@@ -64,6 +68,7 @@ data DrawParams
         Bool
     deriving (Eq, Ord, Show)
 
+-- TODO
 data LayoutSettings
 
 foreign import ccall "GuidoInit"            
@@ -110,6 +115,10 @@ foreign import ccall "GuidoCGraphicDeviceSetRasterMode"
 
 foreign import ccall "GuidoCNativePaint" 
     cGuidoCNativePaint                          :: GraphicsDevice -> IO (Ptr Word32)
+
+foreign import ccall "GuidoGetPageCount" 
+    cGuidoGetPageCount                          :: GraphicRepr -> IO CInt
+
 
 nativePaint :: GraphicsDevice -> IO (Ptr Word32)
 nativePaint = cGuidoCNativePaint
@@ -228,6 +237,10 @@ abstractToGraphicRepr _ ar = do
     free grRef
     checkErr gr err
 
+getPageCount :: GraphicRepr -> IO CInt
+getPageCount = id `fmap` cGuidoGetPageCount
+
+
 -- | Draw a graphic representation to a device.
 draw :: DrawParams -> IO ()
 draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
@@ -311,8 +324,11 @@ gui = do
           
     (!dev,!gr) <- setupTest
 
-    let draw = \dc dim -> do
-        putStrLn $ show dim
+    let draw = \dc dim -> do                   
+        pages <- getPageCount gr
+        putStrLn $ "Dimensions: " ++ show dim
+        putStrLn $ "Pages:      " ++ show pages
+        
         dcClear dc
         
         rawImg <- drawTest frame dev gr
