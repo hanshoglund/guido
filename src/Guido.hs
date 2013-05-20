@@ -12,7 +12,7 @@ module Guido (
     LayoutSettings,
     
     getErrorString,
-    initialize,
+    initialize',
     shutdown,
     getVersionString,
     
@@ -21,7 +21,7 @@ module Guido (
     abstractToGraphicRepr,
     
     getPageCount,
-    draw,
+    draw',
     
     main -- TODO
 ) where
@@ -201,8 +201,8 @@ checkErr a e = case e of
 -- | 
 -- Initialises the Guido Engine. Must be called before any attempt to read a Guido file or to use the
 -- Guido Factory. The given device must be used throghout the session.
-initialize :: InitParams -> IO ()
-initialize = flip with $ (checkErr () =<<) . cInit
+initialize' :: InitParams -> IO ()
+initialize' = flip with $ (checkErr () =<<) . cInit
 
 -- | Shutdown Guido engine.
 shutdown :: IO ()
@@ -237,13 +237,14 @@ abstractToGraphicRepr _ ar = do
     free grRef
     checkErr gr err
 
+-- | Gives the number of score pages of the graphic representation. 
 getPageCount :: GraphicRepr -> IO CInt
 getPageCount = id `fmap` cGuidoGetPageCount
 
 
 -- | Draw a graphic representation to a device.
-draw :: DrawParams -> IO ()
-draw = flip with $ (checkErr () =<<) . cGuidoOnDraw
+draw' :: DrawParams -> IO ()
+draw' = flip with $ (checkErr () =<<) . cGuidoOnDraw
 
 -- foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
     -- Ptr DrawParams -> IO ErrCode
@@ -278,9 +279,9 @@ setupTest = do
     -- dev <- cGuidoCCreateDisplayDevice sys
     dev <- cGuidoCCreateMemoryDevice sys (fst kDim) (snd kDim)
 
-    initialize $ InitParams dev "Guido2" "Arial"
+    initialize' $ InitParams dev "Guido2" "Arial"
 
-    ar <- parseFile "test.gmn" -- parse requires initialize (don't ask!)    
+    ar <- parseFile "test.gmn" -- parse requires initialize' (don't ask!)    
     gr <- abstractToGraphicRepr Nothing ar
 
     putStrLn $ show ar
@@ -289,7 +290,7 @@ setupTest = do
 
 drawTest :: Window a -> GraphicsDevice -> GraphicRepr -> IO (Ptr Word32)
 drawTest win dev gr = do
-    draw $ DrawParams gr dev 1 Nothing (0,0) 1 kDim False
+    draw' $ DrawParams gr dev 1 Nothing (0,0) 1 kDim False
     nativePaint dev
 
 getRGBA :: Word32 -> (Word8,Word8,Word8,Word8)
@@ -324,7 +325,7 @@ gui = do
           
     (!dev,!gr) <- setupTest
 
-    let draw = \dc dim -> do                   
+    let paintHandler = \dc dim -> do                   
         pages <- getPageCount gr
         putStrLn $ "Dimensions: " ++ show dim
         putStrLn $ "Pages:      " ++ show pages
@@ -342,7 +343,7 @@ gui = do
         drawImage dc img (pt 10 10) []
         return ()
 
-    set frame [on paint := draw]
+    set frame [on paint := paintHandler]
     repaint frame
     return ()
 
