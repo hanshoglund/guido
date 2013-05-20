@@ -12,6 +12,7 @@ module Guido (
     LayoutSettings,
     
     getErrorString,
+    initialize,
     initialize',
     shutdown,
     getVersionString,
@@ -21,6 +22,7 @@ module Guido (
     abstractToGraphicRepr,
     
     getPageCount,
+    draw,
     draw',
     
     main -- TODO
@@ -201,6 +203,12 @@ checkErr a e = case e of
 -- | 
 -- Initialises the Guido Engine. Must be called before any attempt to read a Guido file or to use the
 -- Guido Factory. The given device must be used throghout the session.
+initialize :: GraphicsDevice -> String -> String -> IO ()
+initialize dev musicFont textFont = initialize' $ InitParams dev musicFont textFont
+
+-- | 
+-- Initialises the Guido Engine. Must be called before any attempt to read a Guido file or to use the
+-- Guido Factory. The given device must be used throghout the session.
 initialize' :: InitParams -> IO ()
 initialize' = flip with $ (checkErr () =<<) . cInit
 
@@ -241,10 +249,14 @@ abstractToGraphicRepr _ ar = do
 getPageCount :: GraphicRepr -> IO CInt
 getPageCount = id `fmap` cGuidoGetPageCount
 
+-- | Draw a graphic representation to a device.
+draw :: GraphicRepr -> GraphicsDevice -> Int -> (Maybe (Int,Int,Int,Int)) -> (Int,Int) -> Float -> (Int,Int) -> Bool -> IO ()
+draw dev a b c d e f g = draw' $ DrawParams dev a b c d e f g
 
 -- | Draw a graphic representation to a device.
 draw' :: DrawParams -> IO ()
 draw' = flip with $ (checkErr () =<<) . cGuidoOnDraw
+
 
 -- foreign import ccall "GuidoOnDraw" cGuidoOnDraw ::
     -- Ptr DrawParams -> IO ErrCode
@@ -279,18 +291,14 @@ setupTest = do
     -- dev <- cGuidoCCreateDisplayDevice sys
     dev <- cGuidoCCreateMemoryDevice sys (fst kDim) (snd kDim)
 
-    initialize' $ InitParams dev "Guido2" "Arial"
-
+    initialize dev "Guido2" "Arial"
     ar <- parseFile "test.gmn" -- parse requires initialize' (don't ask!)    
     gr <- abstractToGraphicRepr Nothing ar
-
-    putStrLn $ show ar
-    putStrLn $ show gr
     return (dev, gr)
 
 drawTest :: Window a -> GraphicsDevice -> GraphicRepr -> IO (Ptr Word32)
 drawTest win dev gr = do
-    draw' $ DrawParams gr dev 1 Nothing (0,0) 1 kDim False
+    draw gr dev 1 Nothing (0,0) 1 kDim False
     nativePaint dev
 
 getRGBA :: Word32 -> (Word8,Word8,Word8,Word8)
